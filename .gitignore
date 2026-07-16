@@ -1,0 +1,24 @@
+# === Secrets — NE JAMAIS COMMITER (PRD CT-7) ===
+# Clé privée de signature = ancre de confiance. Sa fuite = badges forgés indétectables.
+*.pem
+*.key
+*.p8
+*.pkcs8
+*.jwk
+jwks-private*.json
+.env
+.env.*
+secrets/
+keys/
+
+# === Données personnelles effaçables — hors Git (RGPD, droit à l'effacement) ===
+# Git est append-only : une donnée écrite ici ne peut plus être purgée.
+private-data/
+*.private.json
+emails*.json
+
+# Dépendances / build
+node_modules/
+dist/
+build/
+.DS_Store
