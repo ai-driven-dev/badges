@@ -23,7 +23,7 @@ Import complet, récupéré par export ZIP depuis Claude Design (le MCP plafonne
 
 Le design est une maquette ; ces trois points sont à corriger à l'implémentation, pas dans le PRD :
 
-1. **Domaine.** Le design montre `verify.aidd.community/u/<user>`. À unifier avec le domaine réel retenu.
+1. **Domaine.** Le design montre `verify.aidd.community/u/<user>`. Domaine réel retenu (SP1) : **`verify.ai-driven-dev.fr/u/<handle>`** — à substituer dans le design.
 2. **Promesse de vérification.** Le design affiche « Signature cryptographique validée par le **serveur AIDD** ». Le PRD garantit l'inverse — une vérification **indépendante du serveur** (CT-2, CT-6). Copie à réaligner sur la promesse réelle, sinon le design vend plus faible que le produit.
 3. **Habilité.** Traité à parité avec Certifié dans le design ; le PRD le scope en v2. Cohérent tant que la v1 n'émet que Certifié — le design est simplement en avance.
 

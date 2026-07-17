@@ -1,0 +1,8 @@
+{
+  "name": "sp4-conformance",
+  "private": true,
+  "type": "module",
+  "description": "SP4 — preuve OB 3.0 VC-JWT RS256 accepté par le validateur public 1EdTech",
+  "scripts": { "gen": "node generate.mjs" },
+  "dependencies": { "jose": "^6" }
+}

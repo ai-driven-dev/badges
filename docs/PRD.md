@@ -98,14 +98,12 @@ Le besoin : qu'un tiers puisse **confirmer lui-même** qu'un badge est authentiq
 - **Conformité Open Badges 3.0**, mesurée par l'acceptation du badge par le validateur public 1EdTech.
 - **LinkedIn ne pré-remplit plus les certifications** : le membre saisit chaque champ, dont l'URL de vérification. Le produit doit compenser ce risque (CT-10).
 - **Une Page LinkedIn AIDD** (`linkedin.com/company/ai-driven-dev`) pour le bouton d'ajout au profil.
-- **Un sous-domaine dédié, engagé pour 5 ans minimum**, inscrit dans l'identifiant de chaque badge : le changer casse tous les badges déjà émis.
+- **Le sous-domaine `verify.ai-driven-dev.fr`** (décidé, SP1), renouvelé à vie, inscrit dans l'identifiant de chaque badge : le changer casse tous les badges déjà émis. Servi en **pages statiques GitHub Pages** (aucune logique serveur au runtime ; voir SP1).
 - **Le visuel du badge** (`design/`), produit séparément.
 
 ## Open Questions
 
-- **Domaine de vérification** : le design montre `verify.aidd.community`, une piste antérieure proposait `certs.ai-driven.dev`. À unifier — c'est irréversible une fois des badges émis.
-- **Hébergement de la vérification et de la liste de statuts** : sur le VPS AIDD, ou servis en pages statiques ? La clé privée de signature n'est nécessaire qu'au **build** (au merge, en CI), pas au runtime de vérification — la vérif ne lit que la clé publique.
-- **Rendu de l'annuaire et de la photo** : quel générateur pour le site (le manifest utilise Astro) ?
+- **Rendu de l'annuaire et de la photo** : quel générateur pour le site (le manifest utilise Astro) ? *(SP3)*
 - **Effacement d'une photo dans LFS** : procédure exacte de suppression de l'objet LFS côté GitHub, à documenter et tester.
 - **Aucun juriste n'a validé le dispositif.** Le risque RGPD est faible et documenté (voir annexe), pas levé.
 
@@ -148,7 +146,7 @@ La preuve brute (JWT signé) DOIT être téléchargeable depuis la page du crede
 
 ## CT-7 — Gestion et rotation des clés
 
-Chaque JWT DOIT porter un `kid`. Les clés publiques DOIVENT être publiées dans un JWKS ; après rotation, **les clés publiques antérieures DOIVENT rester publiées indéfiniment** (les retirer rend invérifiables tous les badges signés avec elles). **La clé privée de signature DOIT être un secret GitHub Actions, jamais commitée**, ni en Git ni en LFS. Elle n'est utilisée qu'au **build** (au merge, en CI) ; le runtime de vérification ne lit que la clé publique. Sa fuite permet de forger des badges AIDD indétectables.
+Chaque JWT DOIT porter un `kid` **égal à une URL HTTPS déréférençable**. Cette URL DOIT résoudre vers **un document JWK nu** (`{"kty","n","e",…}`) — **pas** une enveloppe JWKS `{"keys":[…]}` : le validateur 1EdTech lit `kty` à la racine de la réponse (vérifié empiriquement, SP4). Concrètement, publier **un fichier JWK par clé** (ex. `/keys/<kid>.json`) ; un index JWKS agrégé PEUT être publié en plus pour d'autres consommateurs, mais n'est pas ce que le `kid` déréférence. Après rotation, **les clés publiques antérieures DOIVENT rester publiées indéfiniment** (les retirer rend invérifiables tous les badges signés avec elles). **La clé privée de signature DOIT être un secret GitHub Actions, jamais commitée**, ni en Git ni en LFS. Elle n'est utilisée qu'au **build** (au merge, en CI) ; le runtime de vérification ne lit que la clé publique. Sa fuite permet de forger des badges AIDD indétectables.
 
 ## CT-8 — Cycle de vie
 

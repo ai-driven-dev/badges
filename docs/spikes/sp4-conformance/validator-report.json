@@ -1,0 +1,31 @@
+{
+  "id" : "e08454f6-2000-4019-acba-27785ca26935",
+  "generated" : "2026-07-17T10:11:20",
+  "generator" : "OB30Inspector",
+  "input" : {
+    "name" : "credential.embedded-jwk.jwt",
+    "type" : "JWT"
+  },
+  "summary" : {
+    "outcome" : "VALID",
+    "fatals" : 0,
+    "errors" : 0,
+    "warnings" : 0,
+    "exceptions" : 0,
+    "notRun" : 0,
+    "totalRun" : 14,
+    "valid" : 0
+  },
+  "specification" : {
+    "pid" : "ob30.pid",
+    "shortName" : "ob",
+    "version" : "3.0",
+    "title" : "Open Badges 3.0"
+  },
+  "errors" : [ ],
+  "exceptions" : [ ],
+  "valids" : [ ],
+  "fatals" : [ ],
+  "warnings" : [ ],
+  "notRun" : [ ]
+}
