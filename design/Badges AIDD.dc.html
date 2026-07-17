@@ -122,8 +122,8 @@
           </span>
         </a>
         <!-- compact variant -->
-
-
+        
+        
       </div>
       <div style="background:#0b0a2e;border:1px solid rgba(255,255,255,0.09);border-radius:20px;padding:22px;display:flex;flex-direction:column">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
@@ -250,7 +250,7 @@
 
   <!-- ================= FOOTER NOTE ================= -->
   <footer style="max-width:1080px;margin:0 auto;padding:20px 28px 0">
-
+    
   </footer>
 
 </div>
@@ -379,7 +379,7 @@ class Component extends DCLogic {
       '              background:#0a0937;font-family:Arial,sans-serif;font-size:11px;font-weight:bold;',
       '              color:#eef0ff;text-decoration:none">',
       '      <img src="https://verify.aidd.community/seal.png" width="18" height="18"',
-      '           style="vertical-align:middle;margin-right:6px" alt=""> ' + p.labelFR + ' AIDD ✓</a>',
+      '           style="vertical-align:middle;margin-right:6px" alt=""> ' + p.labelFR + ' AIDD \u2713</a>',
       '  </td>',
       '</tr></table>'
     ].join('\n');
@@ -403,7 +403,7 @@ class Component extends DCLogic {
         { k: 'Identifiant', v: 'AIDD-2K7F-9QX3' },
         { k: 'Rôle', v: p.roleValue },
         { k: 'Délivré le', v: '08 juil. 2026' },
-        { k: 'Valable jusqu’au', v: '08 juil. 2027' },
+        { k: 'Valable jusqu\u2019au', v: '08 juil. 2027' },
       ],
       qrOpen: this.state.qrOpen,
       qrClosed: !this.state.qrOpen,

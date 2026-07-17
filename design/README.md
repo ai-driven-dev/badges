@@ -5,24 +5,26 @@ Source : projet Claude Design **« Badge de certification communauté »**
 
 Kit de badges pour deux rôles — **Certifié** (niveau 1) et **Habilité** (niveau 2) — couvrant : sceau, anneau de photo LinkedIn + coin de bannière, badge intégrable web, signature email, et la maquette de la page de vérification.
 
-## Fichiers importés (via le MCP Claude Design)
+## Fichiers
 
-| Fichier | État |
+| Fichier | Rôle |
 |---|---|
-| `Badges AIDD.dc.html` | ✅ complet — la maquette principale (source `.dc.html`) |
-| `support.js` | ✅ complet — runtime Design Canvas requis |
-| `image-slot.js` | ✅ complet — composant de dépôt d'image |
-| `Seal.dc.html` | ❌ **manquant** — dépasse le plafond de lecture du MCP (256 Kio ; il inline le PNG du sceau). À récupérer par export |
-| `assets/logo.png`, `Badge AIDD - standalone.html`, `screenshots/` | ❌ **manquants** — mêmes raisons (binaires / bundle > 256 Kio) |
+| `Badges AIDD.dc.html` | Maquette principale (source Design Canvas) |
+| `Seal.dc.html` | Le sceau — cœur visuel, réutilisé partout via `<dc-import name="Seal">` |
+| `Badge AIDD - standalone.html` | Bundle autonome (aperçu hors runtime) |
+| `support.js` | Runtime Design Canvas requis par les `.dc.html` |
+| `image-slot.js` | Composant de dépôt d'image |
+| `assets/logo.png`, `uploads/` | Sources graphiques |
+| `screenshots/` | Aperçus rendus |
 
-⚠️ `Badges AIDD.dc.html` importe `Seal.dc.html` (`<dc-import name="Seal">`). **La maquette ne s'affiche pas tant que `Seal.dc.html` n'est pas présent.**
+Import complet, récupéré par export ZIP depuis Claude Design (le MCP plafonne la lecture à 256 Kio, dépassé par le sceau et le bundle qui inline des images).
 
-## Compléter l'import
+## À réaligner avec le PRD
 
-Le MCP lit fichier par fichier avec un plafond de 256 Kio ; le sceau et les binaires le dépassent. Pour récupérer le design complet fidèlement : **exporter le projet en ZIP depuis Claude Design** (bouton Download/Export) et déposer les fichiers manquants ici. C'est le seul chemin fidèle pour les fichiers qui inline des images.
+Le design est une maquette ; ces trois points sont à corriger à l'implémentation, pas dans le PRD :
 
-## Notes de cohérence avec le PRD
+1. **Domaine.** Le design montre `verify.aidd.community/u/<user>`. À unifier avec le domaine réel retenu.
+2. **Promesse de vérification.** Le design affiche « Signature cryptographique validée par le **serveur AIDD** ». Le PRD garantit l'inverse — une vérification **indépendante du serveur** (CT-2, CT-6). Copie à réaligner sur la promesse réelle, sinon le design vend plus faible que le produit.
+3. **Habilité.** Traité à parité avec Certifié dans le design ; le PRD le scope en v2. Cohérent tant que la v1 n'émet que Certifié — le design est simplement en avance.
 
-- Le design nomme la page de vérification `verify.aidd.community/u/<user>` ; le PRD proposait `certs.ai-driven.dev`. **Domaine à unifier.**
-- Le design affiche « Signature cryptographique validée par le serveur AIDD » ; le PRD insiste au contraire sur une vérification **indépendante du serveur** (CT-2, CT-6). Copie marketing à réaligner sur la promesse réelle.
-- Le design traite **Habilité** à parité avec Certifié ; le PRD scope Habilité en v2. Cohérent tant que la v1 n'émet que Certifié.
+Note : les données affichées (nom, identifiant `AIDD-2K7F-9QX3`, dates) sont des **exemples de maquette**, pas de vraies données.
