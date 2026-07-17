@@ -1,0 +1,157 @@
+name: Certification PR
+
+# Ouvre une pull request à partir d'une demande de certification (Issue Form).
+# Calqué sur ai-driven-dev/manifest/.github/workflows/signature-pr.yml.
+# L'émission du badge signé n'a PAS lieu ici : elle se fait au MERGE (voir le
+# workflow d'émission, à ajouter). Ce workflow ne fait que préparer la PR.
+
+on:
+  issues:
+    types: [opened, labeled]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: certification-pr-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
+jobs:
+  create-certification-pr:
+    # Le label certification-request est posé côté serveur par l'Issue Form et
+    # ne peut pas être appliqué par un contributeur sans droits de triage.
+    if: >-
+      github.event.issue.state == 'open'
+      && contains(github.event.issue.labels.*.name, 'certification-request')
+      && (github.event.action != 'labeled' || github.event.label.name == 'certification-retry')
+    runs-on: ubuntu-latest
+    steps:
+      # Un token de GitHub App est un acteur distinct du GITHUB_TOKEN : sans lui,
+      # la PR créée laisse ses checks requis bloqués en action_required.
+      - uses: actions/create-github-app-token@v3
+        id: app-token
+        with:
+          app-id: ${{ vars.BADGE_BOT_APP_ID }}
+          private-key: ${{ secrets.BADGE_BOT_PRIVATE_KEY }}
+
+      - uses: actions/checkout@v6
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+
+      - name: Lire la demande
+        id: request
+        continue-on-error: true
+        env:
+          GITHUB_EVENT_PATH: ${{ github.event_path }}
+        run: node .github/scripts/read-certification-request.js
+
+      - name: Signaler une demande invalide
+        if: steps.request.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          gh issue comment "$ISSUE_NUMBER" --body "Demande non traitable. Vérifie les champs et ouvre une nouvelle demande : éditer cette issue ne relance pas le workflow."
+          gh issue edit "$ISSUE_NUMBER" --add-label "certification-needs-fix" || true
+          gh issue close "$ISSUE_NUMBER" --reason "not planned"
+          exit 1
+
+      - name: Arrêter un doublon
+        id: duplicate
+        if: steps.request.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          GITHUB_HANDLE: ${{ steps.request.outputs.github }}
+          ISSUE_NUMBER: ${{ steps.request.outputs.issue_number }}
+          MEMBER_PATH: ${{ steps.request.outputs.path }}
+        run: |
+          if [ ! -f "$MEMBER_PATH" ]; then
+            echo "found=false" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          gh issue comment "$ISSUE_NUMBER" --body "@$GITHUB_HANDLE est déjà dans le registre des certifiés."
+          gh issue edit "$ISSUE_NUMBER" --add-label "certification-duplicate" || true
+          gh issue close "$ISSUE_NUMBER" --reason "not planned"
+          echo "found=true" >> "$GITHUB_OUTPUT"
+
+      # ── Photo ─────────────────────────────────────────────────────────────
+      # ⚠️ À ÉPROUVER. Le manifest n'a pas cette étape (il utilise l'avatar
+      # GitHub). Ici : télécharger l'image collée, redimensionner, convertir en
+      # WebP, STRIP EXIF, écrire en LFS. Outils suggérés : ImageMagick / sharp.
+      # Laisser cette étape échouer proprement plutôt que publier une image non
+      # traitée. Tant qu'elle n'est pas validée, l'annuaire peut se rabattre sur
+      # l'avatar GitHub.
+      - name: Traiter la photo (à éprouver)
+        id: photo
+        if: steps.duplicate.outputs.found == 'false' && steps.request.outputs.photo_url != ''
+        env:
+          PHOTO_URL: ${{ steps.request.outputs.photo_url }}
+          GITHUB_HANDLE: ${{ steps.request.outputs.github }}
+        run: |
+          set -euo pipefail
+          dest="data/members/photos/${GITHUB_HANDLE}.webp"
+          mkdir -p "$(dirname "$dest")"
+          curl -fsSL "$PHOTO_URL" -o /tmp/in.img
+          # Redimensionne (max 512px), convertit WebP, retire toutes métadonnées.
+          convert /tmp/in.img -auto-orient -resize '512x512>' -strip -quality 82 "$dest"
+          echo "path=$dest" >> "$GITHUB_OUTPUT"
+
+      - name: Écrire l'enregistrement
+        if: steps.duplicate.outputs.found == 'false'
+        env:
+          GITHUB_HANDLE: ${{ steps.request.outputs.github }}
+          ROLE: ${{ steps.request.outputs.role }}
+          NAME_YAML: ${{ steps.request.outputs.name_yaml }}
+          LINKEDIN_YAML: ${{ steps.request.outputs.linkedin_yaml }}
+          MEMBER_PATH: ${{ steps.request.outputs.path }}
+          PHOTO_PATH: ${{ steps.photo.outputs.path }}
+        run: |
+          mkdir -p "$(dirname "$MEMBER_PATH")"
+          {
+            echo "github: $GITHUB_HANDLE"
+            echo "role: $ROLE"
+            echo "name: $NAME_YAML"
+            if [ -n "$LINKEDIN_YAML" ]; then echo "linkedin: $LINKEDIN_YAML"; fi
+            if [ -n "${PHOTO_PATH:-}" ]; then echo "photo: $PHOTO_PATH"; fi
+          } > "$MEMBER_PATH"
+
+      - name: Committer sur une branche
+        if: steps.duplicate.outputs.found == 'false'
+        env:
+          BRANCH: ${{ steps.request.outputs.branch }}
+          GITHUB_HANDLE: ${{ steps.request.outputs.github }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c "$BRANCH"
+          git add data/members
+          git commit -m "Ajout du certifié $GITHUB_HANDLE"
+          git push -u origin "$BRANCH"
+
+      - name: Ouvrir la pull request
+        id: pull-request
+        if: steps.duplicate.outputs.found == 'false'
+        env:
+          BRANCH: ${{ steps.request.outputs.branch }}
+          DISPLAY_NAME: ${{ steps.request.outputs.name }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          GITHUB_HANDLE: ${{ steps.request.outputs.github }}
+        run: |
+          pr_url="$(gh pr create \
+            --title "Certification : $DISPLAY_NAME" \
+            --body "PR automatique depuis l'Issue Form pour @$GITHUB_HANDLE. **Vérifier la photo et les informations, puis merger pour émettre le badge.**" \
+            --head "$BRANCH" --base main)"
+          echo "url=$pr_url" >> "$GITHUB_OUTPUT"
+
+      - name: Fermer l'issue
+        if: steps.pull-request.outputs.url != ''
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          ISSUE_NUMBER: ${{ steps.request.outputs.issue_number }}
+          PR_URL: ${{ steps.pull-request.outputs.url }}
+        run: |
+          gh issue comment "$ISSUE_NUMBER" --body "Pull request créée : $PR_URL"
+          gh issue close "$ISSUE_NUMBER" --reason completed

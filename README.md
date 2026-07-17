@@ -2,31 +2,58 @@
 
 Certification vérifiable des membres de la communauté AI-Driven Development.
 
-Chaque membre certifié reçoit un badge dont l'authenticité est **vérifiable par un tiers de façon indépendante** (Open Badges 3.0), affichable sur LinkedIn et ailleurs. Deux rôles : **Certifié** (niveau 1, v1) et **Habilité** (niveau 2, v2).
+Chaque membre certifié reçoit un badge dont l'authenticité est **vérifiable par un tiers de façon indépendante** (Open Badges 3.0), affichable sur LinkedIn, en signature email, sur un site, et dans un annuaire public. Deux rôles : **Certifié** (niveau 1, v1) et **Habilité** (niveau 2, v2).
+
+## Comment ça marche
+
+Intake git-natif, calqué sur [`ai-driven-dev/manifest`](https://github.com/ai-driven-dev/manifest) :
+
+1. Un membre remplit l'**Issue Form** → une issue est ouverte.
+2. Un bot (GitHub App) lit la demande, écrit son enregistrement, traite sa photo, et ouvre une **pull request**.
+3. Un mainteneur **relit et merge**. Ce merge est le **point d'autorité d'émission** : rien n'est émis sans lui.
+4. Le merge déclenche la génération du **badge Open Badges 3.0 signé** (à ajouter — job d'émission), la mise à jour de la liste de statuts, et le déploiement de l'annuaire.
 
 ## Structure
 
 | Chemin | Contenu |
 |---|---|
-| `docs/PRD.md` | Spécification produit + contraintes techniques (CT-1 → CT-10) + feuille de route |
-| `design/` | Kit de badges importé depuis Claude Design (sceau, LinkedIn, embed, signature, page de vérif) |
+| `docs/PRD.md` | Spécification produit + contraintes techniques (CT-1 → CT-13) + feuille de route |
+| `design/` | Kit de badges importé depuis Claude Design |
+| `data/members/` | Registre des certifiés (un YAML par personne). Voir son README pour le schéma |
+| `.github/` | Issue Form + workflow d'ouverture de PR (calqué sur manifest) |
+
+## État du pipeline
+
+| Pièce | État |
+|---|---|
+| Issue Form (`certification.yml`) | Squelette |
+| Script de lecture (`read-certification-request.js`) | Écrit, **non testé** |
+| Workflow d'ouverture de PR | Écrit, **non testé** |
+| Traitement photo (download → WebP → strip EXIF → LFS) | **À éprouver** — le manifest n'a pas cet équivalent |
+| Job d'émission au merge (signature RS256) | **À écrire** |
+| Annuaire + page de vérification | À écrire |
+
+## Setup requis (manuel, hors code)
+
+Ces étapes ne peuvent pas être scriptées depuis le dépôt :
+
+1. **Créer une GitHub App « badge-bot »** (droits : issues RW, contents RW, pull requests RW). Renseigner :
+   - variable `BADGE_BOT_APP_ID`
+   - secret `BADGE_BOT_PRIVATE_KEY`
+2. **Générer la clé de signature RS256** et la mettre en **secret CI** (jamais dans le dépôt — CT-7/CT-13). Publier la clé publique en JWKS.
+3. **Activer Git LFS** sur le dépôt (`git lfs install`) — les photos y sont routées par `.gitattributes`.
+4. **Réserver le sous-domaine de vérification** (permanent, 5 ans min — CT-11 infra).
 
 ## ⚠️ Garde-fous — à lire avant tout commit
 
-Ce dépôt est **privé**, mais un dépôt privé n'est pas un coffre-fort, et Git n'oublie rien.
+Dépôt **privé**, mais un dépôt privé n'est pas un coffre-fort, et Git n'oublie rien.
 
-1. **La clé privée de signature ne DOIT jamais être commitée.** Elle est l'ancre de confiance : sa fuite permet de forger des badges AIDD indétectables (PRD, CT-7). Elle vit sur le VPS, hors dépôt.
-2. **Aucune donnée personnelle effaçable (email brut) ne DOIT être commitée.** Git est append-only : `git rm` n'efface pas l'historique. Or le PRD promet la purge de l'email sur demande d'effacement (RGPD). Une donnée effaçable écrite dans Git rend cette promesse intenable. Voir la note d'architecture ci-dessous.
-
-## Note d'architecture — séparer ce qui persiste de ce qui s'efface
-
-Si une base « à plat » sert de source aux badges, elle DOIT être scindée :
-
-- **Données publiques et durables** (nom, identifiant, dates, émetteur) → versionnables dans Git : elles sont publiées par conception et destinées à persister.
-- **Données personnelles effaçables** (email ; à trancher pour photo et URL LinkedIn) → **magasin mutable séparé, jamais commité**.
-
-Cette séparation est la condition pour concilier une source versionnée et le droit à l'effacement. Elle reste **à valider** (voir `docs/PRD.md` et les questions ouvertes).
+1. **La clé privée de signature ne DOIT jamais être commitée** (ni Git, ni LFS). Secret CI uniquement. Sa fuite = badges AIDD forgés indétectables (CT-7, CT-13).
+2. **Aucune donnée personnelle effaçable ne DOIT aller dans l'historique Git ordinaire.** `git rm` n'efface pas le passé. Le modèle sépare donc les données (CT-12) :
+   - **Publiques et durables** (handle, nom, LinkedIn, rôle, dates) → Git.
+   - **Photos** → **Git LFS** (effacement = suppression de l'objet LFS).
+   - **Email** → **non collecté** : l'identité repose sur le compte GitHub (CT-3).
 
 ## Statut
 
-Amorçage. Le PRD est la source de vérité ; l'implémentation n'a pas commencé. Stack non tranchée (voir PRD).
+Amorçage. Le PRD (`docs/PRD.md`) est la source de vérité. Le pipeline d'intake est scaffoldé mais non testé ; l'émission signée reste à écrire. Stack du site non tranchée.

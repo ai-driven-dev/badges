@@ -1,0 +1,45 @@
+name: Demander un badge de certification
+description: Ouvre une demande. Une pull request sera créée pour revue avant émission.
+title: "Certification: "
+labels:
+  - certification-request
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Ton compte GitHub servira d'identité du badge et de lien de profil.
+        Une pull request sera ouverte pour revue ; **aucun badge n'est émis avant qu'un mainteneur ne la merge**.
+  - type: dropdown
+    id: role
+    attributes:
+      label: Rôle
+      description: Le niveau certifié. En v1, seul « Certifié » est émis.
+      options:
+        - certifie
+        - habilite
+    validations:
+      required: true
+  - type: input
+    id: display_name
+    attributes:
+      label: Nom affiché
+      description: Nom public affiché sur le badge et l'annuaire.
+      placeholder: Prénom Nom
+    validations:
+      required: true
+  - type: input
+    id: linkedin
+    attributes:
+      label: Profil LinkedIn
+      description: URL complète du profil LinkedIn (optionnel).
+      placeholder: https://www.linkedin.com/in/ton-profil/
+    validations:
+      required: false
+  - type: textarea
+    id: photo
+    attributes:
+      label: Photo
+      description: Colle ici ta photo (glisse le fichier dans la zone). Elle sera redimensionnée, convertie en WebP et débarrassée de ses métadonnées avant publication. Visible dans la pull request pour modération.
+      placeholder: Glisse ton image ici.
+    validations:
+      required: false

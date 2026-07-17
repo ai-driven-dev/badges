@@ -1,0 +1,5 @@
+# Photos des membres — stockées en Git LFS (PRD CT-12).
+# Le binaire vit comme objet LFS, hors historique principal ;
+# l'effacement RGPD = suppression de l'objet LFS, sans réécriture d'historique.
+data/members/photos/**/*.webp filter=lfs diff=lfs merge=lfs -text
+data/members/photos/**/*.avif filter=lfs diff=lfs merge=lfs -text
