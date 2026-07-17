@@ -178,6 +178,30 @@ Les données DOIVENT être scindées selon leur effaçabilité :
 
 La clé privée de signature (CT-7) et la clé privée de la GitHub App (CT-11) NE DOIVENT jamais être commitées, ni en Git ni en LFS. Elles vivent en secrets GitHub Actions. Le `.gitignore` DOIT bloquer les extensions de clés et les fichiers d'environnement.
 
+## Modèle de données
+
+Un fichier YAML par membre, nommé d'après son handle GitHub, dans un répertoire de registre (ex. `data/members/<handle>.yml`). Ces champs sont **publics et durables** (CT-12) et vivent dans Git.
+
+```yaml
+github: <handle>          # requis — identité du badge (CT-3), = auteur de l'issue de demande
+role: certifie            # requis — certifie | habilite
+name: Prénom Nom          # requis — nom public
+linkedin: https://...     # optionnel — URL de profil
+photo: <chemin LFS>       # optionnel — ex. data/members/photos/<handle>.webp (objet Git LFS)
+```
+
+**Généré au merge, pas saisi** (le job d'émission le calcule à partir de la date de merge, pour qu'un demandeur ne fixe pas lui-même sa validité) :
+
+- `badge_id` — identifiant unique du credential ;
+- `certified_on` — date d'émission (= date de merge) ;
+- `expires_on` — `certified_on` + 1 an (CT-8).
+
+Ces valeurs ne figurent pas dans le YAML d'intake : elles sont scellées dans le credential signé et exposées par la page de vérification.
+
+**Photo** : jamais le binaire dans le YAML — seulement un chemin vers un objet **Git LFS** (CT-12). L'effacement est la suppression de l'objet LFS, sans réécriture d'historique.
+
+**Aucune donnée effaçable (email) n'est stockée** — l'identité repose sur le compte GitHub (CT-3).
+
 ## Validation de conformité
 
 Le validateur public [`1EdTech/digital-credentials-public-validator`](https://github.com/1EdTech/digital-credentials-public-validator) fait référence : un credential qu'il rejette n'est pas conforme, quel que soit le verdict de notre page.
