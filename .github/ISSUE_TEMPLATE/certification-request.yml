@@ -1,0 +1,42 @@
+name: Demande de badge Certifié
+description: Demander l'émission de votre badge de membre certifié AI-Driven Development.
+title: "[Certif] Demande de badge"
+labels: ["certification-request"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Votre identité de badge est votre **compte GitHub** (celui avec lequel vous ouvrez cette demande) — vous n'avez rien à saisir pour ça.
+        Un mainteneur Habilité valide la demande ; le badge est émis à la fusion. Aucun email n'est collecté.
+  - type: input
+    id: name
+    attributes:
+      label: Nom complet
+      description: Le nom public affiché sur le badge et dans l'annuaire.
+      placeholder: Prénom Nom
+    validations:
+      required: true
+  - type: input
+    id: linkedin
+    attributes:
+      label: Profil LinkedIn
+      description: Optionnel. URL complète de votre profil.
+      placeholder: https://www.linkedin.com/in/votre-profil
+    validations:
+      required: false
+  - type: textarea
+    id: photo
+    attributes:
+      label: Photo
+      description: Optionnel. Glissez une image ici (elle sera redimensionnée et nettoyée avant publication). Sera visible dans l'annuaire public.
+    validations:
+      required: false
+  - type: checkboxes
+    id: consent
+    attributes:
+      label: Consentement et exactitude
+      options:
+        - label: Je contrôle ce compte GitHub et les informations fournies sont exactes.
+          required: true
+        - label: J'accepte que mon nom (et ma photo / mon LinkedIn si fournis) apparaissent dans l'annuaire public et dans un badge vérifiable par un tiers.
+          required: true
