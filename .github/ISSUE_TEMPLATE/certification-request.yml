@@ -1,18 +1,19 @@
-name: Demande de badge Certifié
-description: Demander l'émission de votre badge de membre certifié AI-Driven Development.
-title: "[Certif] Demande de badge"
+name: S'inscrire au registre des certifiés
+description: Rejoindre la liste publique des membres certifiés AI-Driven Development.
+title: "[Certifié] Inscription au registre"
 labels: ["certification-request"]
 body:
   - type: markdown
     attributes:
       value: |
-        Votre identité de badge est votre **compte GitHub** (celui avec lequel vous ouvrez cette demande) — vous n'avez rien à saisir pour ça.
-        Un mainteneur Habilité valide la demande ; le badge est émis à la fusion. Aucun email n'est collecté.
+        Vous avez été certifié. En vous inscrivant, vous apparaissez dans l'annuaire public des membres certifiés et vous recevez un badge vérifiable par un tiers.
+
+        Votre identité est votre compte GitHub, celui avec lequel vous ouvrez cette inscription. Vous n'avez donc rien à saisir pour cela. Un mainteneur relit votre inscription, puis elle est publiée. Aucune adresse email n'est collectée.
   - type: input
     id: name
     attributes:
       label: Nom complet
-      description: Le nom public affiché sur le badge et dans l'annuaire.
+      description: Le nom qui figurera dans l'annuaire et sur votre badge.
       placeholder: Prénom Nom
     validations:
       required: true
@@ -20,23 +21,31 @@ body:
     id: linkedin
     attributes:
       label: Profil LinkedIn
-      description: Optionnel. URL complète de votre profil.
+      description: L'adresse complète de votre profil LinkedIn.
       placeholder: https://www.linkedin.com/in/votre-profil
+    validations:
+      required: true
+  - type: input
+    id: website
+    attributes:
+      label: Site web
+      description: Si vous avez un site personnel, indiquez son adresse. Ce champ est facultatif.
+      placeholder: https://votre-site.fr
     validations:
       required: false
   - type: textarea
     id: photo
     attributes:
       label: Photo
-      description: Optionnel. Glissez une image ici (elle sera redimensionnée et nettoyée avant publication). Sera visible dans l'annuaire public.
+      description: Glissez une photo de vous dans ce champ. Elle sera redimensionnée et nettoyée avant d'être publiée dans l'annuaire.
     validations:
-      required: false
+      required: true
   - type: checkboxes
     id: consent
     attributes:
-      label: Consentement et exactitude
+      label: Exactitude et publication
       options:
-        - label: Je contrôle ce compte GitHub et les informations fournies sont exactes.
+        - label: Je contrôle ce compte GitHub et les informations que je fournis sont exactes.
           required: true
-        - label: J'accepte que mon nom (et ma photo / mon LinkedIn si fournis) apparaissent dans l'annuaire public et dans un badge vérifiable par un tiers.
+        - label: J'accepte que mon nom, ma photo, mon profil LinkedIn et mon site le cas échéant soient publiés dans l'annuaire public et intégrés à un badge vérifiable par un tiers.
           required: true
