@@ -3,9 +3,7 @@
 # Habilité doit approuver AVANT que le job ne s'exécute. La clé privée est générée
 # dans le runner, déposée dans le secret d'environnement, et jamais journalisée ni commitée.
 #
-# AVANT MERGE (gouvernance env protégé, #13) : figer les actions ci-dessous par SHA
-# (actions/checkout, actions/setup-node, actions/create-github-app-token) — les tags
-# de version ne sont pas acceptables pour ce workflow critique.
+# Actions figées par SHA (gouvernance env protégé, #13) — ne pas repasser aux tags.
 name: Cérémonie de clé (init / rotation)
 
 on:
@@ -32,10 +30,10 @@ jobs:
           exit 1
 
       - name: Récupérer le dépôt
-        uses: actions/checkout@v4   # TODO SHA-pin avant merge
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
       - name: Node
-        uses: actions/setup-node@v4 # TODO SHA-pin avant merge
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: "20"
 
@@ -48,7 +46,7 @@ jobs:
 
       - name: Jeton de l'App secret-writer
         id: apptoken
-        uses: actions/create-github-app-token@v1  # TODO SHA-pin avant merge
+        uses: actions/create-github-app-token@d72941d797fd3113feb6b93fd0dec494b13a2547 # v1
         with:
           app-id: ${{ secrets.KEY_WRITER_APP_ID }}
           private-key: ${{ secrets.KEY_WRITER_APP_PRIVATE_KEY }}
