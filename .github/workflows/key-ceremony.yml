@@ -1,0 +1,75 @@
+# Cérémonie de clé de signature — init / rotation (#41).
+# Déclenchement manuel, gaté par l'environnement protégé `signing` : un mainteneur
+# Habilité doit approuver AVANT que le job ne s'exécute. La clé privée est générée
+# dans le runner, déposée dans le secret d'environnement, et jamais journalisée ni commitée.
+#
+# Actions figées par SHA (gouvernance env protégé, #13) — ne pas repasser aux tags.
+name: Cérémonie de clé (init / rotation)
+
+on:
+  workflow_dispatch:   # bouton "Run workflow" ; l'approbation du gate `signing` est la confirmation
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  ceremony:
+    runs-on: ubuntu-latest
+    environment: signing   # gate : reviewers Habilité + déploiement restreint à main
+    steps:
+      - name: Récupérer le dépôt
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+
+      - name: Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: "20"
+
+      - name: Installer jose (bibliothèque auditée, CT-9)
+        run: cd .github/scripts && npm i --no-save jose@6.2.3
+
+      - name: Générer la paire et écrire la clé publique
+        id: gen
+        run: node .github/scripts/key-ceremony.mjs
+
+      - name: Jeton de l'App secret-writer
+        id: apptoken
+        uses: actions/create-github-app-token@d72941d797fd3113feb6b93fd0dec494b13a2547 # v1
+        with:
+          app-id: ${{ secrets.KEY_WRITER_APP_ID }}
+          private-key: ${{ secrets.KEY_WRITER_APP_PRIVATE_KEY }}
+
+      - name: Déposer la clé privée dans le secret d'environnement `signing`
+        env:
+          GH_TOKEN: ${{ steps.apptoken.outputs.token }}
+        run: |
+          gh secret set SIGNING_PRIVATE_KEY \
+            --env signing \
+            --repo "${{ github.repository }}" \
+            < "${{ steps.gen.outputs.priv_path }}"
+          rm -f "${{ steps.gen.outputs.priv_path }}"
+          echo "Clé privée déposée dans signing/SIGNING_PRIVATE_KEY."
+
+      - name: Ouvrir la PR de publication de la clé publique
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          KID="${{ steps.gen.outputs.kid }}"
+          BRANCH="key/${KID}"
+          git config user.name "aidd-badges"
+          git config user.email "actions@github.com"
+          git checkout -b "$BRANCH"
+          git add keys/
+          git commit -m "chore(keys): publier la clé publique ${KID}"
+          git push origin "$BRANCH"
+          gh pr create --base main --head "$BRANCH" \
+            --title "Publier la clé publique ${KID}" \
+            --body "Clé publique issue de la cérémonie de clé. La clé privée correspondante est déjà dans le secret d'environnement \`signing\`. **Merger publie la clé** (servie par Pages) ; l'émission dérive le kid de la clé active, donc n'émettre qu'après ce merge."
+
+      - name: Résumé
+        run: |
+          echo "### Nouvelle clé de signature" >> "$GITHUB_STEP_SUMMARY"
+          echo "- kid : \`${{ steps.gen.outputs.kid }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Clé privée : secret d'environnement \`signing/SIGNING_PRIVATE_KEY\`." >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Action requise** : merger la PR de clé publique avant toute émission." >> "$GITHUB_STEP_SUMMARY"
