@@ -176,6 +176,10 @@ Les données DOIVENT être scindées selon leur effaçabilité :
 
 La clé privée de signature (CT-7) et la clé privée de la GitHub App (CT-11) NE DOIVENT jamais être commitées, ni en Git ni en LFS. Elles vivent en secrets GitHub Actions. Le `.gitignore` DOIT bloquer les extensions de clés et les fichiers d'environnement.
 
+## CT-14 — Dépôt public
+
+Le dépôt DOIT être **public**. Les verrous de confiance dont dépend tout le dispositif — protection de branche (le merge par un mainteneur = point d'autorité, CT-11) et protection d'environnement (le gate de review sur la signature, CT-7) — **ne sont pas disponibles sur un dépôt privé au plan gratuit** (vérifié : `403`/`422` de l'API GitHub). Les rendre effectifs impose soit le public (gratuit), soit un plan payant (écarté, cf. « aucune dépendance payante »). Le public est sans risque ici : la clé privée est un secret hors dépôt (CT-7/CT-13), aucune donnée effaçable ne vit en Git (CT-12), et les données des membres sont de toute façon destinées à l'annuaire public. Le public renforce aussi l'intake : tout titulaire d'un compte GitHub peut déposer sa demande (CT-11). Repasser le dépôt en privé désactiverait les verrous et casserait le modèle de confiance.
+
 ## Modèle de données
 
 Un fichier YAML par membre, nommé d'après son handle GitHub, dans un répertoire de registre (ex. `data/members/<handle>.yml`). Ces champs sont **publics et durables** (CT-12) et vivent dans Git.
