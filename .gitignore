@@ -9,7 +9,9 @@ jwks-private*.json
 .env
 .env.*
 secrets/
-keys/
+# NB : keys/ n'est PAS ignoré — il contient les clés PUBLIQUES (JWK nu par kid),
+# à committer car servies par Pages. Les clés privées ne vont jamais dans keys/
+# (elles restent en secret d'environnement) ; *.pem/*.key/*.jwk les bloquent partout.
 
 # === Données personnelles effaçables — hors Git (RGPD, droit à l'effacement) ===
 # Git est append-only : une donnée écrite ici ne peut plus être purgée.
