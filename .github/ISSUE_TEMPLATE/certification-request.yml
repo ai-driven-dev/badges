@@ -1,0 +1,51 @@
+name: S'inscrire au registre des certifiés
+description: Rejoindre la liste publique des membres certifiés AI-Driven Development.
+title: "[Certifié] Inscription au registre"
+labels: ["certification-request"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Vous avez été certifié. En vous inscrivant, vous apparaissez dans l'annuaire public des membres certifiés et vous recevez un badge vérifiable par un tiers.
+
+        Votre identité est votre compte GitHub, celui avec lequel vous ouvrez cette inscription. Vous n'avez donc rien à saisir pour cela. Un mainteneur relit votre inscription, puis elle est publiée. Aucune adresse email n'est collectée.
+  - type: input
+    id: name
+    attributes:
+      label: Nom complet
+      description: Le nom qui figurera dans l'annuaire et sur votre badge.
+      placeholder: Prénom Nom
+    validations:
+      required: true
+  - type: input
+    id: linkedin
+    attributes:
+      label: Profil LinkedIn
+      description: L'adresse complète de votre profil LinkedIn.
+      placeholder: https://www.linkedin.com/in/votre-profil
+    validations:
+      required: true
+  - type: input
+    id: website
+    attributes:
+      label: Site web
+      description: Si vous avez un site personnel, indiquez son adresse. Ce champ est facultatif.
+      placeholder: https://votre-site.fr
+    validations:
+      required: false
+  - type: textarea
+    id: photo
+    attributes:
+      label: Photo
+      description: Glissez une photo de vous dans ce champ. Elle sera redimensionnée et nettoyée avant d'être publiée dans l'annuaire.
+    validations:
+      required: true
+  - type: checkboxes
+    id: consent
+    attributes:
+      label: Exactitude et publication
+      options:
+        - label: Je contrôle ce compte GitHub et les informations que je fournis sont exactes.
+          required: true
+        - label: J'accepte que mon nom, ma photo, mon profil LinkedIn et mon site le cas échéant soient publiés dans l'annuaire public et intégrés à un badge vérifiable par un tiers.
+          required: true
