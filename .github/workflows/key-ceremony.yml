@@ -7,12 +7,7 @@
 name: Cérémonie de clé (init / rotation)
 
 on:
-  workflow_dispatch:
-    inputs:
-      confirm:
-        description: "Taper ROTATE pour confirmer la génération d'une nouvelle clé de signature"
-        required: true
-        type: string
+  workflow_dispatch:   # bouton "Run workflow" ; l'approbation du gate `signing` est la confirmation
 
 permissions:
   contents: write
@@ -23,12 +18,6 @@ jobs:
     runs-on: ubuntu-latest
     environment: signing   # gate : reviewers Habilité + déploiement restreint à main
     steps:
-      - name: Garde-fou de confirmation
-        if: ${{ inputs.confirm != 'ROTATE' }}
-        run: |
-          echo "Confirmation manquante (attendu : ROTATE)."
-          exit 1
-
       - name: Récupérer le dépôt
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
