@@ -16,7 +16,7 @@ permissions:
 jobs:
   ceremony:
     runs-on: ubuntu-latest
-    environment: signing   # gate : reviewers Habilité + déploiement restreint à main
+    environment: key-ceremony   # approbation Habilité (init/rotation, rare)
     steps:
       - name: Récupérer le dépôt
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4

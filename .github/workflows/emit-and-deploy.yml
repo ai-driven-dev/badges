@@ -1,0 +1,83 @@
+# Émission signée + publication (#23). Au merge sur main (ou manuellement),
+# régénère TOUS les credentials de façon déterministe et déploie le site statique
+# sur GitHub Pages : clés publiques, profil issuer, une preuve VC-JWT par membre.
+#
+# Déterminisme : certified_on = date du commit qui a ajouté data/members/<handle>.yml.
+# RS256 étant déterministe, régénérer produit le même credential — aucune preuve
+# n'est committée, aucun contournement de la protection de main n'est requis.
+name: Émettre et publier
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "data/members/**"
+      - "keys/**"
+      - "public/**"
+      - ".github/scripts/sign-credential.mjs"
+      - ".github/workflows/emit-and-deploy.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    environment: signing   # main uniquement, expose SIGNING_PRIVATE_KEY (pas d'approbation)
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          fetch-depth: 0   # historique complet : dater chaque membre par son commit d'ajout
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: "20"
+
+      - name: Installer jose (CT-9)
+        run: cd .github/scripts && npm i --no-save jose@6.2.3
+
+      - name: Émettre les credentials (déterministe)
+        env:
+          SIGNING_PRIVATE_KEY: ${{ secrets.SIGNING_PRIVATE_KEY }}
+        run: |
+          shopt -s nullglob
+          count=0
+          for f in data/members/*.yml; do
+            certified_on="$(git log --diff-filter=A --format=%aI -- "$f" | tail -1)"
+            if [ -z "$certified_on" ]; then
+              echo "::warning::pas de commit d'ajout pour $f, ignoré"; continue
+            fi
+            CERTIFIED_ON="$certified_on" node .github/scripts/sign-credential.mjs "$f"
+            count=$((count+1))
+          done
+          echo "émis: $count credential(s)"
+
+      - name: Assembler le site statique
+        run: |
+          mkdir -p _site/keys _site/u
+          cp public/issuer.json _site/issuer.json
+          if [ -d keys ]; then cp keys/*.json _site/keys/ 2>/dev/null || true; fi
+          if [ -d u ]; then cp -r u/* _site/u/ 2>/dev/null || true; fi
+          echo "verify.ai-driven-dev.fr" > _site/CNAME
+
+      - uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4
