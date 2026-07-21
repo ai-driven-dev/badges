@@ -1,0 +1,7 @@
+{
+  "name": "sp2-photo",
+  "private": true,
+  "type": "module",
+  "description": "SP2 — preuve de faisabilité du pipeline photo (sharp)",
+  "dependencies": { "sharp": "^0.33" }
+}
