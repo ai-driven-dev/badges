@@ -17,6 +17,7 @@ on:
       - "site/**"
       - ".github/scripts/sign-credential.mjs"
       - ".github/scripts/sign-status-list.mjs"
+      - ".github/scripts/build-directory.mjs"
       - ".github/scripts/lib/**"
       - ".github/workflows/emit-and-deploy.yml"
   workflow_dispatch:
@@ -36,13 +37,14 @@ jobs:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           fetch-depth: 0   # historique complet : dater chaque membre par son commit d'ajout
+          lfs: true        # récupérer les vraies photos (objets LFS), pas les pointeurs
 
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: "20"
 
-      - name: Installer jose (CT-9)
-        run: cd .github/scripts && npm i --no-save jose@6.2.3
+      - name: Installer les dépendances des scripts
+        run: cd .github/scripts && npm ci
 
       - name: Émettre les credentials (déterministe)
         env:
@@ -69,14 +71,21 @@ jobs:
           STATUS_ISSUED_ON="$(git show -s --format=%aI HEAD)" \
             node .github/scripts/sign-status-list.mjs
 
+      - name: Construire le flux annuaire (directory.json)
+        run: |
+          DIRECTORY_GENERATED_AT="$(git show -s --format=%aI HEAD)" \
+            node .github/scripts/build-directory.mjs
+
       - name: Assembler le site statique
         run: |
-          mkdir -p _site/keys _site/u _site/status
+          mkdir -p _site/keys _site/u _site/status _site/photos
           cp public/issuer.json _site/issuer.json
           cp site/verify.mjs site/verify-page.mjs site/bitstring.mjs _site/  # code de vérif (navigateur)
           cp site/verify.html _site/index.html                     # page de vérif générique
+          cp directory.json _site/directory.json                   # flux annuaire (#33/#49)
           if [ -d keys ]; then cp keys/*.json _site/keys/ 2>/dev/null || true; fi
           if [ -d u ]; then cp -r u/* _site/u/ 2>/dev/null || true; fi
+          if [ -d data/members/photos ]; then cp data/members/photos/*.webp _site/photos/ 2>/dev/null || true; fi
           if [ -f status/1 ]; then cp status/1 _site/status/1; fi
           echo "verify.ai-driven-dev.fr" > _site/CNAME
 

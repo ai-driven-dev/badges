@@ -33,6 +33,14 @@ body:
       placeholder: https://votre-site.fr
     validations:
       required: false
+  - type: input
+    id: description
+    attributes:
+      label: Description
+      description: Une phrase de présentation affichée dans l'annuaire. Facultatif, une ligne.
+      placeholder: "Développeur passionné d'IA appliquée au dev."
+    validations:
+      required: false
   - type: textarea
     id: photo
     attributes:

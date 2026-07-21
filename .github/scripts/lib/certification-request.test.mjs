@@ -8,16 +8,18 @@ import {
   parseLinkedin,
   parseWebsite,
   parsePhotoUrl,
+  parseDescription,
   toMemberYaml,
 } from './certification-request.mjs';
 
 const PHOTO_MD = '![moi](https://github.com/user-attachments/assets/abc)';
 
-function issueBody({ name = 'Jean Dupont', linkedin = 'https://www.linkedin.com/in/jd', website = '', photo = PHOTO_MD } = {}) {
+function issueBody({ name = 'Jean Dupont', linkedin = 'https://www.linkedin.com/in/jd', website = '', description = '', photo = PHOTO_MD } = {}) {
   return [
     `### Nom complet\n\n${name}`,
     `### Profil LinkedIn\n\n${linkedin}`,
     `### Site web\n\n${website || '_No response_'}`,
+    `### Description\n\n${description || '_No response_'}`,
     `### Photo\n\n${photo || '_No response_'}`,
   ].join('\n\n');
 }
@@ -102,6 +104,20 @@ describe('parsePhotoUrl', () => {
   });
 });
 
+describe('parseDescription', () => {
+  it('rend une chaîne vide quand absente', () => {
+    assert.equal(parseDescription({ description: '_No response_' }), '');
+  });
+
+  it('rend la description fournie', () => {
+    assert.equal(parseDescription({ description: 'Dev IA' }), 'Dev IA');
+  });
+
+  it('rejette une description au-delà de la limite', () => {
+    assert.throws(() => parseDescription({ description: 'x'.repeat(281) }), RequestError);
+  });
+});
+
 describe('toMemberYaml', () => {
   const base = { handle: 'jd', name: 'Jean', linkedin: 'https://linkedin.com/in/jd', website: '', statusIndex: 0 };
 
@@ -128,6 +144,16 @@ describe('toMemberYaml', () => {
   it('inscrit le chemin LFS de la photo dérivé du handle', () => {
     const yaml = toMemberYaml({ ...base, handle: 'octocat' });
     assert.match(yaml, /photo: "data\/members\/photos\/octocat\.webp"/);
+  });
+
+  it('inscrit la description quand fournie', () => {
+    const yaml = toMemberYaml({ ...base, description: 'Dev IA' });
+    assert.match(yaml, /description: "Dev IA"/);
+  });
+
+  it('omet la description quand absente', () => {
+    const yaml = toMemberYaml({ ...base, description: '' });
+    assert.ok(!yaml.includes('description:'));
   });
 
   it('rejette un index de statut absent', () => {
