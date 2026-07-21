@@ -1,0 +1,136 @@
+# Intake : une issue d'inscription (#18) -> PR d'enregistrement (#19), avec arrêt
+# des doublons (#20). Le job agit sous l'App bot intake, pas sous GITHUB_TOKEN :
+# une PR ouverte par GITHUB_TOKEN laisse ses checks bloqués sur action_required.
+name: PR d'inscription au registre
+
+on:
+  issues:
+    types: [opened, labeled]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: certification-pr-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
+jobs:
+  create-pr:
+    # Le label `certification-request` est posé côté serveur par l'Issue Form et
+    # ne peut pas être mis par un contributeur sans droits de triage. Retirer le
+    # label arrête ce workflow. `certification-retry` (triage-only) rejoue un échec.
+    if: >-
+      github.event.issue.state == 'open'
+      && contains(github.event.issue.labels.*.name, 'certification-request')
+      && (github.event.action != 'labeled' || github.event.label.name == 'certification-retry')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/create-github-app-token@d72941d797fd3113feb6b93fd0dec494b13a2547 # v1
+        id: app-token
+        with:
+          app-id: ${{ secrets.INTAKE_BOT_APP_ID }}
+          private-key: ${{ secrets.INTAKE_BOT_APP_PRIVATE_KEY }}
+
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: "20"
+
+      - name: Lire la demande d'inscription
+        id: request
+        continue-on-error: true
+        env:
+          GITHUB_EVENT_PATH: ${{ github.event_path }}
+        run: node .github/scripts/read-certification-request.mjs
+
+      - name: Signaler une demande invalide
+        if: steps.request.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          gh issue comment "$ISSUE_NUMBER" --body "Votre inscription n'a pas pu être traitée. Vérifiez les champs du formulaire (nom et profil LinkedIn requis) et ouvrez une nouvelle demande : modifier cette issue ne relance pas le traitement, qui ne réagit qu'aux issues nouvellement ouvertes."
+          gh issue edit "$ISSUE_NUMBER" --add-label "certification-needs-fix" || true
+          gh issue close "$ISSUE_NUMBER" --reason "not planned"
+          exit 1
+
+      - name: Arrêter un doublon
+        id: duplicate
+        if: steps.request.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          GITHUB_HANDLE: ${{ steps.request.outputs.github }}
+          ISSUE_NUMBER: ${{ steps.request.outputs.issue_number }}
+          MEMBER_PATH: ${{ steps.request.outputs.path }}
+        run: |
+          if [ ! -f "$MEMBER_PATH" ]; then
+            echo "found=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          gh issue comment "$ISSUE_NUMBER" --body "@$GITHUB_HANDLE est déjà dans le registre des certifiés."
+          gh issue edit "$ISSUE_NUMBER" --add-label "certification-duplicate" || true
+          gh issue close "$ISSUE_NUMBER" --reason "not planned"
+          echo "found=true" >> "$GITHUB_OUTPUT"
+
+      - name: Arrêter si une PR existe déjà
+        id: existing-pr
+        if: steps.duplicate.outputs.found == 'false'
+        env:
+          BRANCH_PREFIX: certif/${{ steps.request.outputs.github }}-
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          GITHUB_HANDLE: ${{ steps.request.outputs.github }}
+          ISSUE_NUMBER: ${{ steps.request.outputs.issue_number }}
+        run: |
+          pr_url="$(gh pr list --state open --json url,headRefName \
+            --jq '[.[] | select(.headRefName | startswith(env.BRANCH_PREFIX))] | .[0].url // ""')"
+          echo "url=$pr_url" >> "$GITHUB_OUTPUT"
+          if [ -n "$pr_url" ]; then
+            gh issue comment "$ISSUE_NUMBER" --body "Une PR d'inscription est déjà ouverte pour @$GITHUB_HANDLE : $pr_url"
+            gh issue edit "$ISSUE_NUMBER" --add-label "certification-pr-created" || true
+            gh issue close "$ISSUE_NUMBER" --reason "not planned"
+          fi
+
+      - name: Écrire l'enregistrement
+        if: steps.request.outcome == 'success' && steps.duplicate.outputs.found == 'false' && steps.existing-pr.outputs.url == ''
+        env:
+          MEMBER_PATH: ${{ steps.request.outputs.path }}
+          RECORD: ${{ steps.request.outputs.record }}
+        run: |
+          mkdir -p "$(dirname "$MEMBER_PATH")"
+          printf '%s' "$RECORD" > "$MEMBER_PATH"
+
+      - name: Committer et ouvrir la PR
+        id: pull-request
+        if: steps.request.outcome == 'success' && steps.duplicate.outputs.found == 'false' && steps.existing-pr.outputs.url == ''
+        env:
+          BRANCH: ${{ steps.request.outputs.branch }}
+          DISPLAY_NAME: ${{ steps.request.outputs.name }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          GITHUB_HANDLE: ${{ steps.request.outputs.github }}
+          MEMBER_PATH: ${{ steps.request.outputs.path }}
+        run: |
+          git config user.name "aidd-badges-intake-bot"
+          git config user.email "actions@github.com"
+          git switch -c "$BRANCH"
+          git add "$MEMBER_PATH"
+          git commit -m "Inscription au registre : $GITHUB_HANDLE"
+          git push -u origin "$BRANCH"
+          pr_url="$(gh pr create \
+            --title "Inscription : $DISPLAY_NAME (@$GITHUB_HANDLE)" \
+            --body "PR d'inscription générée depuis le formulaire pour @$GITHUB_HANDLE. Relire l'enregistrement YAML et merger si accepté. La photo est traitée séparément (#21). Le badge est émis à la fusion (#23)." \
+            --head "$BRANCH" --base main)"
+          echo "url=$pr_url" >> "$GITHUB_OUTPUT"
+
+      - name: Fermer l'issue d'inscription
+        if: steps.pull-request.outputs.url != ''
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          ISSUE_NUMBER: ${{ steps.request.outputs.issue_number }}
+          PR_URL: ${{ steps.pull-request.outputs.url }}
+        run: |
+          gh issue comment "$ISSUE_NUMBER" --body "PR d'inscription créée : $PR_URL"
+          gh issue edit "$ISSUE_NUMBER" --add-label "certification-pr-created" || true
+          gh issue close "$ISSUE_NUMBER" --reason completed
