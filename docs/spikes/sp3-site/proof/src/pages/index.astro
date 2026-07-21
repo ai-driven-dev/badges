@@ -1,0 +1,13 @@
+---
+import { loadMembers } from '../lib.mjs';
+const members = loadMembers();
+---
+<html lang="fr"><head><meta charset="utf-8"><title>Membres certifiés AIDD</title></head>
+<body>
+  <h1>Membres certifiés</h1>
+  <ul>
+    {members.map((m) => (
+      <li><a href={`/u/${m.github}`}>{m.name}</a> — @{m.github}</li>
+    ))}
+  </ul>
+</body></html>
