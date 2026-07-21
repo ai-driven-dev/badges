@@ -3,21 +3,18 @@
 // signée RS256, et l'écrit à `status/1`. Exécuté au build, dans l'env `signing`.
 //
 // Clé privée : env SIGNING_PRIVATE_KEY. Date : env STATUS_ISSUED_ON (déterministe).
-import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { importPKCS8, SignJWT } from 'jose';
-import { parseMemberYaml } from './lib/credential.mjs';
 import { buildStatusListCredential } from './lib/status-list.mjs';
-import { listMemberHandles, recordPathFor } from './lib/member-paths.mjs';
+import { LEDGER_PATH, parseLedger } from './lib/revocation.mjs';
 
 function fail(m) { console.error(m); process.exit(2); }
 
+// Les révocations viennent du registre (#36), pas des records : un membre retiré
+// n'a plus de dossier, seul son index survit dans le registre.
 function collectRevokedIndices() {
-  const revoked = [];
-  for (const h of listMemberHandles()) {
-    const m = parseMemberYaml(readFileSync(recordPathFor(h), 'utf8'));
-    if (String(m.revoked) === 'true') revoked.push(Number(m.status_index));
-  }
-  return revoked.filter((i) => Number.isInteger(i) && i >= 0);
+  if (!existsSync(LEDGER_PATH)) return [];
+  return parseLedger(readFileSync(LEDGER_PATH, 'utf8'));
 }
 
 async function main() {
