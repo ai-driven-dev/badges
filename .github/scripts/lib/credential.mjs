@@ -44,9 +44,14 @@ export function deterministicUuid(handle, date) {
   return `urn:uuid:${a}-${b.slice(0, 4)}-4${b.slice(5, 8)}-8${c.slice(1, 4)}-${c.slice(4)}${e}`;
 }
 
+/** URL de la Bitstring Status List (révocation, CT-4). */
+export function statusListUrl(base = DEFAULT_BASE) {
+  return `${base}/status/1`;
+}
+
 /**
  * Assemble le credential OB3 pour un membre.
- * @param {{handle,name}} member
+ * @param {{handle,name,statusIndex}} member
  * @param {{certifiedOn: Date, base?: string}} options
  */
 export function buildCredential(member, { certifiedOn, base = DEFAULT_BASE }) {
@@ -54,6 +59,9 @@ export function buildCredential(member, { certifiedOn, base = DEFAULT_BASE }) {
   if (!member?.name) throw new Error('name requis');
   if (!(certifiedOn instanceof Date) || Number.isNaN(certifiedOn.getTime())) {
     throw new Error('certifiedOn doit être une Date valide');
+  }
+  if (!Number.isInteger(member.statusIndex) || member.statusIndex < 0) {
+    throw new Error('statusIndex doit être un entier positif');
   }
 
   const expiresOn = addYears(certifiedOn, 1); // CT-8 / #24
@@ -79,6 +87,13 @@ export function buildCredential(member, { certifiedOn, base = DEFAULT_BASE }) {
     issuer: { id: `${base}/issuer.json`, type: ['Profile'], name: 'AI-Driven Development', url: 'https://ai-driven-dev.fr' },
     validFrom: isoSeconds(certifiedOn),
     validUntil: isoSeconds(expiresOn),
+    credentialStatus: {
+      id: `${statusListUrl(base)}#${member.statusIndex}`,
+      type: 'BitstringStatusListEntry',
+      statusPurpose: 'revocation',
+      statusListIndex: String(member.statusIndex),
+      statusListCredential: statusListUrl(base),
+    },
     credentialSubject: subject,
   };
 }

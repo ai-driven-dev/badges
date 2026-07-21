@@ -66,7 +66,7 @@ describe('keyUrl', () => {
 });
 
 describe('buildCredential', () => {
-  const member = { handle: 'jdupont', name: 'Jean Dupont' };
+  const member = { handle: 'jdupont', name: 'Jean Dupont', statusIndex: 0 };
   const certifiedOn = new Date('2026-07-21T10:00:00Z');
 
   it('déclare les deux contextes OB3 dans l\'ordre attendu (v2 en premier)', () => {
@@ -102,11 +102,24 @@ describe('buildCredential', () => {
     assert.deepEqual(a, b);
   });
 
+  it('référence la Bitstring Status List via credentialStatus', () => {
+    const credential = buildCredential({ ...member, statusIndex: 42 }, { certifiedOn });
+    assert.equal(credential.credentialStatus.type, 'BitstringStatusListEntry');
+    assert.equal(credential.credentialStatus.statusPurpose, 'revocation');
+    assert.equal(credential.credentialStatus.statusListIndex, '42');
+    assert.equal(credential.credentialStatus.statusListCredential, 'https://verify.ai-driven-dev.fr/status/1');
+  });
+
   it('rejette une date de certification invalide', () => {
     assert.throws(() => buildCredential(member, { certifiedOn: new Date('pas une date') }), /Date valide/);
   });
 
   it('rejette un membre sans handle', () => {
-    assert.throws(() => buildCredential({ name: 'X' }, { certifiedOn }), /handle requis/);
+    assert.throws(() => buildCredential({ name: 'X', statusIndex: 0 }, { certifiedOn }), /handle requis/);
+  });
+
+  it('rejette un statusIndex absent ou négatif', () => {
+    assert.throws(() => buildCredential({ handle: 'x', name: 'X' }, { certifiedOn }), /statusIndex/);
+    assert.throws(() => buildCredential({ handle: 'x', name: 'X', statusIndex: -1 }, { certifiedOn }), /statusIndex/);
   });
 });

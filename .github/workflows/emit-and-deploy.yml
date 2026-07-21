@@ -14,7 +14,10 @@ on:
       - "data/members/**"
       - "keys/**"
       - "public/**"
+      - "site/**"
       - ".github/scripts/sign-credential.mjs"
+      - ".github/scripts/sign-status-list.mjs"
+      - ".github/scripts/lib/**"
       - ".github/workflows/emit-and-deploy.yml"
   workflow_dispatch:
 
@@ -59,14 +62,22 @@ jobs:
           done
           echo "émis: $count credential(s)"
 
+      - name: Émettre la Bitstring Status List (révocation)
+        env:
+          SIGNING_PRIVATE_KEY: ${{ secrets.SIGNING_PRIVATE_KEY }}
+        run: |
+          STATUS_ISSUED_ON="$(git show -s --format=%aI HEAD)" \
+            node .github/scripts/sign-status-list.mjs
+
       - name: Assembler le site statique
         run: |
-          mkdir -p _site/keys _site/u
+          mkdir -p _site/keys _site/u _site/status
           cp public/issuer.json _site/issuer.json
-          cp site/verify.mjs site/verify-page.mjs _site/            # code de vérif (navigateur)
+          cp site/verify.mjs site/verify-page.mjs site/bitstring.mjs _site/  # code de vérif (navigateur)
           cp site/verify.html _site/index.html                     # page de vérif générique
           if [ -d keys ]; then cp keys/*.json _site/keys/ 2>/dev/null || true; fi
           if [ -d u ]; then cp -r u/* _site/u/ 2>/dev/null || true; fi
+          if [ -f status/1 ]; then cp status/1 _site/status/1; fi
           echo "verify.ai-driven-dev.fr" > _site/CNAME
 
       - uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3

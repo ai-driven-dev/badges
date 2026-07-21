@@ -39,11 +39,25 @@ jobs:
         with:
           node-version: "20"
 
+      - name: Calculer l'index de statut suivant
+        id: idx
+        run: |
+          # Index permanent dans la Bitstring Status List : max existant + 1.
+          # (Volume faible, PR relues en série ; une collision improbable serait vue au merge.)
+          max=-1
+          shopt -s nullglob
+          for f in data/members/*.yml; do
+            i="$(grep -oE '^status_index:[[:space:]]*[0-9]+' "$f" | grep -oE '[0-9]+' || true)"
+            if [ -n "$i" ] && [ "$i" -gt "$max" ]; then max="$i"; fi
+          done
+          echo "next=$((max+1))" >> "$GITHUB_OUTPUT"
+
       - name: Lire la demande d'inscription
         id: request
         continue-on-error: true
         env:
           GITHUB_EVENT_PATH: ${{ github.event_path }}
+          NEXT_STATUS_INDEX: ${{ steps.idx.outputs.next }}
         run: node .github/scripts/read-certification-request.mjs
 
       - name: Signaler une demande invalide

@@ -5,8 +5,36 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { generateKeyPair, exportJWK, calculateJwkThumbprint, SignJWT } from 'jose';
 import { verifyBadge, decodeJwt, evaluateValidity, STATE } from './verify.mjs';
+import { encodeRevoked } from './bitstring.mjs';
 
 const BASE = 'https://verify.ai-driven-dev.fr';
+
+// Émet un badge portant credentialStatus + une status list signée avec la même clé.
+async function issueWithStatus({ index, revokedIndices }) {
+  const { publicKey, privateKey } = await generateKeyPair('RS256', { modulusLength: 2048, extractable: true });
+  const jwk = await exportJWK(publicKey);
+  const kid = await calculateJwkThumbprint(await exportJWK(privateKey));
+  const kidUrl = `${BASE}/keys/${kid}.json`;
+  const statusUrl = `${BASE}/status/1`;
+
+  const badge = await new SignJWT({
+    '@context': ['https://www.w3.org/ns/credentials/v2'],
+    type: ['VerifiableCredential', 'OpenBadgeCredential'],
+    issuer: { id: `${BASE}/issuer.json`, type: ['Profile'], name: 'AI-Driven Development' },
+    credentialSubject: { id: 'https://github.com/jdupont', type: ['AchievementSubject'], achievement: { name: 'Certified Member' } },
+    credentialStatus: { type: 'BitstringStatusListEntry', statusPurpose: 'revocation', statusListIndex: String(index), statusListCredential: statusUrl },
+    validFrom: '2026-01-01T00:00:00Z',
+  }).setProtectedHeader({ alg: 'RS256', typ: 'JWT', kid: kidUrl }).setExpirationTime(4102444800).sign(privateKey);
+
+  const statusJwt = await new SignJWT({
+    '@context': ['https://www.w3.org/ns/credentials/v2'],
+    type: ['VerifiableCredential', 'BitstringStatusListCredential'],
+    issuer: { id: `${BASE}/issuer.json`, type: ['Profile'] },
+    credentialSubject: { type: 'BitstringStatusList', statusPurpose: 'revocation', encodedList: await encodeRevoked(revokedIndices) },
+  }).setProtectedHeader({ alg: 'RS256', typ: 'JWT', kid: kidUrl }).sign(privateKey);
+
+  return { badge, fetchKey: async () => jwk, fetchStatus: async () => statusJwt };
+}
 
 async function issue({ exp, nbf } = {}) {
   const { publicKey, privateKey } = await generateKeyPair('RS256', { modulusLength: 2048, extractable: true });
@@ -98,5 +126,34 @@ describe('verifyBadge', () => {
     const result = await verifyBadge(jwt, { fetchKey, now: new Date('2026-06-01T00:00:00Z') });
 
     assert.equal(result.state, STATE.EXPIRED);
+  });
+});
+
+describe('verifyBadge — révocation', () => {
+  it('rend REVOKED quand le bit du credential est à un dans la status list', async () => {
+    const { badge, fetchKey, fetchStatus } = await issueWithStatus({ index: 5, revokedIndices: [5] });
+
+    const result = await verifyBadge(badge, { fetchKey, fetchStatus, now: new Date('2026-06-01T00:00:00Z') });
+
+    assert.equal(result.state, STATE.REVOKED);
+  });
+
+  it('rend VALID quand le bit du credential est à zéro', async () => {
+    const { badge, fetchKey, fetchStatus } = await issueWithStatus({ index: 5, revokedIndices: [9] });
+
+    const result = await verifyBadge(badge, { fetchKey, fetchStatus, now: new Date('2026-06-01T00:00:00Z') });
+
+    assert.equal(result.state, STATE.VALID);
+    assert.equal(result.statusUnknown, false);
+  });
+
+  it('signale un statut non concluant quand la status list est injoignable', async () => {
+    const { badge, fetchKey } = await issueWithStatus({ index: 5, revokedIndices: [] });
+    const failingStatus = async () => { throw new Error('offline'); };
+
+    const result = await verifyBadge(badge, { fetchKey, fetchStatus: failingStatus, now: new Date('2026-06-01T00:00:00Z') });
+
+    assert.equal(result.state, STATE.VALID);
+    assert.equal(result.statusUnknown, true);
   });
 });
