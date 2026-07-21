@@ -12,6 +12,7 @@ on:
     branches: [main]
     paths:
       - "data/members/**"
+      - "data/revoked.json"
       - "keys/**"
       - "public/**"
       - "site/**"

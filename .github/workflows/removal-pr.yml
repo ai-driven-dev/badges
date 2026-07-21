@@ -1,0 +1,84 @@
+# Retrait RGPD (#36) : une demande de retrait -> PR qui supprime le dossier du
+# membre (fiche + photo LFS) et révoque son badge via le registre. Le merge par un
+# mainteneur applique le retrait. Agit sous l'App bot intake (checks non bloqués).
+name: PR de retrait RGPD
+
+on:
+  issues:
+    types: [opened, labeled]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: removal-pr-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
+jobs:
+  create-pr:
+    if: >-
+      github.event.issue.state == 'open'
+      && contains(github.event.issue.labels.*.name, 'removal-request')
+      && (github.event.action != 'labeled' || github.event.label.name == 'removal-retry')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/create-github-app-token@d72941d797fd3113feb6b93fd0dec494b13a2547 # v1
+        id: app-token
+        with:
+          app-id: ${{ secrets.INTAKE_BOT_APP_ID }}
+          private-key: ${{ secrets.INTAKE_BOT_APP_PRIVATE_KEY }}
+
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: "20"
+
+      - name: Appliquer le retrait (registre + suppression du dossier)
+        id: removal
+        env:
+          HANDLE: ${{ github.event.issue.user.login }}
+        run: node .github/scripts/remove-member.mjs
+
+      - name: Signaler l'absence de fiche
+        if: steps.removal.outputs.removed == 'false'
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          HANDLE: ${{ github.event.issue.user.login }}
+        run: |
+          gh issue comment "$ISSUE_NUMBER" --body "@$HANDLE n'a pas de fiche dans le registre — rien à retirer."
+          gh issue close "$ISSUE_NUMBER" --reason "not planned"
+
+      - name: Ouvrir la PR de retrait
+        id: pull-request
+        if: steps.removal.outputs.removed == 'true'
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          HANDLE: ${{ github.event.issue.user.login }}
+        run: |
+          BRANCH="retrait/${HANDLE}-${{ github.event.issue.number }}"
+          git config user.name "aidd-badges-intake-bot"
+          git config user.email "actions@github.com"
+          git switch -c "$BRANCH"
+          git add -A
+          git commit -m "Retrait RGPD : $HANDLE"
+          git push -u origin "$BRANCH"
+          pr_url="$(gh pr create \
+            --title "Retrait RGPD : @$HANDLE" \
+            --body "Demande de retrait de @$HANDLE. Cette PR **supprime son dossier** (fiche + photo LFS) et **révoque son badge** (index ajouté au registre). Merger applique le retrait. La preuve déjà exportée apparaîtra révoquée via la liste de statuts (seule voie)." \
+            --head "$BRANCH" --base main)"
+          echo "url=$pr_url" >> "$GITHUB_OUTPUT"
+
+      - name: Fermer l'issue de retrait
+        if: steps.pull-request.outputs.url != ''
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          PR_URL: ${{ steps.pull-request.outputs.url }}
+        run: |
+          gh issue comment "$ISSUE_NUMBER" --body "PR de retrait créée : $PR_URL"
+          gh issue edit "$ISSUE_NUMBER" --add-label "removal-pr-created" || true
+          gh issue close "$ISSUE_NUMBER" --reason completed

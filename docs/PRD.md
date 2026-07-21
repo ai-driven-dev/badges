@@ -193,8 +193,9 @@ photo: <chemin LFS>       # requis — data/members/<handle>/photo.webp (objet G
 status_index: <entier>    # requis — index permanent dans la Bitstring Status List (CT-4), assigné à l'intake
 website: https://...      # optionnel — site personnel
 description: <une ligne>  # optionnel — présentation affichée dans l'annuaire (≤ 280)
-revoked: true             # optionnel — présent = badge révoqué, sort de l'annuaire (retrait, #36)
 ```
+
+**Retrait RGPD (#36).** Un retrait **supprime tout le dossier** `data/members/<handle>/` (fiche + photo LFS) — l'effacement, pas une réécriture d'historique. Pour que le badge reste révoqué à vie malgré la disparition de la fiche, son `status_index` est inscrit dans un **registre de révocation** `data/revoked.json` (une liste d'entiers — pas de donnée personnelle). La liste de statuts (CT-4) se construit à partir de ce registre. Une preuve déjà exportée reste présentable mais apparaît **révoquée** à la vérification (CT-5, seule voie).
 
 Le site public `ai-driven-dev.fr` (`/communaute`) affiche l'annuaire ; il consomme le flux **`directory.json`** publié par la CI sur `verify.ai-driven-dev.fr` (nom, LinkedIn, photo, site, description, URL de vérif). Les photos sont servies sur `verify.ai-driven-dev.fr/photos/<handle>.webp`. Les membres révoqués sont exclus du flux.
 

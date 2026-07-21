@@ -1,0 +1,18 @@
+name: Demander le retrait de mes données (RGPD)
+description: Retirer votre fiche, votre photo et révoquer votre badge.
+title: "[Retrait] Demande de retrait RGPD"
+labels: ["removal-request"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Cette demande retire **vos** données (celles du compte GitHub avec lequel vous l'ouvrez) : votre fiche et votre photo sont supprimées, et votre badge est révoqué.
+
+        À savoir : une preuve que vous auriez déjà téléchargée reste techniquement présentable, mais elle apparaîtra **révoquée** à la vérification (liste de statuts). C'est la seule voie possible ; l'historique Git n'est pas réécrit, mais aucune donnée personnelle n'y subsiste.
+  - type: checkboxes
+    id: confirm
+    attributes:
+      label: Confirmation
+      options:
+        - label: Je demande le retrait des données associées à ce compte GitHub et la révocation de mon badge.
+          required: true
