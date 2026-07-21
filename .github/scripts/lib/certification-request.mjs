@@ -74,12 +74,14 @@ export function parseWebsite(fields) {
 }
 
 /** Sérialise l'enregistrement du membre en YAML plat, valeurs échappées. */
-export function toMemberYaml({ handle, name, linkedin, website }) {
+export function toMemberYaml({ handle, name, linkedin, website, statusIndex }) {
+  if (!Number.isInteger(statusIndex) || statusIndex < 0) throw new RequestError('statusIndex requis');
   const lines = [
     `github: ${yamlScalar(handle)}`,
     `role: "certifie"`,
     `name: ${yamlScalar(name)}`,
     `linkedin: ${yamlScalar(linkedin)}`,
+    `status_index: ${statusIndex}`, // index permanent dans la Bitstring Status List (CT-4)
   ];
   if (website) lines.push(`website: ${yamlScalar(website)}`);
   return lines.join('\n') + '\n';
@@ -87,9 +89,11 @@ export function toMemberYaml({ handle, name, linkedin, website }) {
 
 /**
  * Transforme une issue (objet event.issue) en enregistrement complet.
+ * @param {object} issue  objet event.issue
+ * @param {number} statusIndex  index permanent assigné à l'inscription (Bitstring, CT-4)
  * Lève RequestError si un champ requis manque ou est invalide.
  */
-export function buildMemberRecord(issue) {
+export function buildMemberRecord(issue, statusIndex) {
   const handle = parseHandle(issue?.user?.login);
   const fields = parseIssueFormBody(issue?.body || '');
   const name = parseName(fields);
@@ -101,9 +105,10 @@ export function buildMemberRecord(issue) {
     name,
     linkedin,
     website,
+    statusIndex,
     issueNumber: issue.number,
     path: `${MEMBER_DIR}/${handle}.yml`,
     branch: `certif/${handle}-${issue.number}`,
-    yaml: toMemberYaml({ handle, name, linkedin, website }),
+    yaml: toMemberYaml({ handle, name, linkedin, website, statusIndex }),
   };
 }

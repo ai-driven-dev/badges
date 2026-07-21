@@ -20,9 +20,14 @@ function writeOutputs(output, record) {
 
 function main() {
   const event = JSON.parse(readFileSync(process.env.GITHUB_EVENT_PATH, 'utf8'));
-  const record = buildMemberRecord(event.issue);
+  const nextIndex = Number(process.env.NEXT_STATUS_INDEX);
+  if (!Number.isInteger(nextIndex) || nextIndex < 0) {
+    console.error(`NEXT_STATUS_INDEX absent/invalide : ${process.env.NEXT_STATUS_INDEX}`);
+    process.exit(2);
+  }
+  const record = buildMemberRecord(event.issue, nextIndex);
   writeOutputs(process.env.GITHUB_OUTPUT, record);
-  console.log(`Enregistrement prêt : ${record.path}`);
+  console.log(`Enregistrement prêt : ${record.path} (status_index=${nextIndex})`);
 }
 
 main();

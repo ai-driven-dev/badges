@@ -22,6 +22,8 @@ async function main() {
 
   const member = parseMemberYaml(readFileSync(memberPath, 'utf8'));
   if (!member.github) fail(`github manquant dans ${memberPath}`);
+  const statusIndex = Number(member.status_index);
+  if (!Number.isInteger(statusIndex) || statusIndex < 0) fail(`status_index manquant/invalide dans ${memberPath}`);
 
   const certifiedOn = process.env.CERTIFIED_ON;
   if (!certifiedOn) fail("CERTIFIED_ON absent (date ISO du commit d'ajout)");
@@ -32,7 +34,7 @@ async function main() {
   // Le thumbprint ignore `d` → identique au kid de la clé publique publiée.
   const kid = await calculateJwkThumbprint(await exportJWK(privateKey));
 
-  const credential = buildCredential({ handle: member.github, name: member.name }, { certifiedOn: issuedAt });
+  const credential = buildCredential({ handle: member.github, name: member.name, statusIndex }, { certifiedOn: issuedAt });
 
   const jwt = await new SignJWT(credential)
     .setProtectedHeader({ alg: 'RS256', typ: 'JWT', kid: keyUrl(kid) })

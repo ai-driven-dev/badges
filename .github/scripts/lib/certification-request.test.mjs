@@ -88,42 +88,59 @@ describe('parseWebsite', () => {
 });
 
 describe('toMemberYaml', () => {
+  const base = { handle: 'jd', name: 'Jean', linkedin: 'https://linkedin.com/in/jd', website: '', statusIndex: 0 };
+
   it('omet la ligne site quand aucun site n\'est fourni', () => {
-    const yaml = toMemberYaml({ handle: 'jd', name: 'Jean', linkedin: 'https://linkedin.com/in/jd', website: '' });
+    const yaml = toMemberYaml(base);
     assert.ok(!yaml.includes('website'));
   });
 
   it('inclut la ligne site quand un site est fourni', () => {
-    const yaml = toMemberYaml({ handle: 'jd', name: 'Jean', linkedin: 'https://linkedin.com/in/jd', website: 'https://jd.fr' });
+    const yaml = toMemberYaml({ ...base, website: 'https://jd.fr' });
     assert.match(yaml, /website: "https:\/\/jd\.fr"/);
   });
 
   it('échappe un nom contenant guillemets et deux-points pour neutraliser l\'injection YAML', () => {
-    const yaml = toMemberYaml({ handle: 'jd', name: 'Evil: "x"', linkedin: 'https://linkedin.com/in/jd', website: '' });
+    const yaml = toMemberYaml({ ...base, name: 'Evil: "x"' });
     assert.match(yaml, /name: "Evil: \\"x\\""/);
+  });
+
+  it('inscrit l\'index de statut', () => {
+    const yaml = toMemberYaml({ ...base, statusIndex: 12 });
+    assert.match(yaml, /status_index: 12/);
+  });
+
+  it('rejette un index de statut absent', () => {
+    assert.throws(() => toMemberYaml({ ...base, statusIndex: undefined }), RequestError);
   });
 });
 
 describe('buildMemberRecord', () => {
   it('dérive l\'identité du compte auteur, pas d\'un champ saisi', () => {
-    const record = buildMemberRecord(issue({ user: { login: 'octocat' } }));
+    const record = buildMemberRecord(issue({ user: { login: 'octocat' } }), 0);
     assert.equal(record.handle, 'octocat');
     assert.equal(record.path, 'data/members/octocat.yml');
   });
 
   it('construit la branche à partir du handle et du numéro d\'issue', () => {
-    const record = buildMemberRecord(issue({ number: 42, user: { login: 'octocat' } }));
+    const record = buildMemberRecord(issue({ number: 42, user: { login: 'octocat' } }), 0);
     assert.equal(record.branch, 'certif/octocat-42');
   });
 
   it('produit un YAML complet pour une demande valide avec site', () => {
-    const record = buildMemberRecord(issue({ body: issueBody({ website: 'https://jd.fr' }) }));
+    const record = buildMemberRecord(issue({ body: issueBody({ website: 'https://jd.fr' }) }), 3);
     assert.match(record.yaml, /github: "jdupont"/);
     assert.match(record.yaml, /role: "certifie"/);
     assert.match(record.yaml, /website: "https:\/\/jd\.fr"/);
   });
 
+  it('inscrit l\'index de statut permanent assigné', () => {
+    const record = buildMemberRecord(issue(), 7);
+    assert.equal(record.statusIndex, 7);
+    assert.match(record.yaml, /status_index: 7/);
+  });
+
   it('rejette une demande dont le LinkedIn est manquant', () => {
-    assert.throws(() => buildMemberRecord(issue({ body: issueBody({ linkedin: '_No response_' }) })), RequestError);
+    assert.throws(() => buildMemberRecord(issue({ body: issueBody({ linkedin: '_No response_' }) }), 0), RequestError);
   });
 });

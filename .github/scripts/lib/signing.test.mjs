@@ -24,7 +24,7 @@ async function signFor(member, certifiedOn) {
 }
 
 describe('signature du credential', () => {
-  const member = { handle: 'jdupont', name: 'Jean Dupont' };
+  const member = { handle: 'jdupont', name: 'Jean Dupont', statusIndex: 0 };
   const certifiedOn = new Date('2026-07-21T10:00:00Z');
 
   it('produit un JWT vérifiable avec la clé publique', async () => {

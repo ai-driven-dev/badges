@@ -21,6 +21,8 @@ export function base64urlToBytes(b64url) {
   return bytes;
 }
 
+import { decodeBitstring, getBit } from './bitstring.mjs';
+
 const decodeJson = (b64url) => JSON.parse(new TextDecoder().decode(base64urlToBytes(b64url)));
 
 /** Découpe un JWT compact en header/payload/signature + entrée de signature. */
@@ -66,13 +68,33 @@ export function readDetails(payload) {
 }
 
 /**
+ * Contrôle de révocation via Bitstring Status List (CT-4).
+ * Récupère le credential de statut (VC-JWT signé), vérifie sa signature, décode
+ * le bitstring et lit le bit du credential.
+ * @returns {{ revoked: boolean, checked: boolean }}
+ */
+export async function checkRevocation(status, { getJwt, getKey }) {
+  if (!status) return { revoked: false, checked: true }; // pas de credentialStatus -> rien à vérifier
+  try {
+    const jwt = (await getJwt(status.statusListCredential)).trim();
+    const decoded = decodeJwt(jwt);
+    const jwk = await getKey(decoded.header.kid);
+    if (!(await verifySignature(decoded, jwk))) return { revoked: false, checked: false };
+    const bytes = await decodeBitstring(decoded.payload.credentialSubject.encodedList);
+    return { revoked: getBit(bytes, Number(status.statusListIndex)), checked: true };
+  } catch {
+    return { revoked: false, checked: false }; // statut injoignable -> non concluant
+  }
+}
+
+/**
  * Vérifie un badge de bout en bout.
  * @param {string} jwt
- * @param {{ fetchKey?: (url:string)=>Promise<object>, now?: Date }} deps
- *   fetchKey injectable pour les tests ; par défaut fetch de l'URL du kid.
- * @returns {{ state, details, header, payload }}
+ * @param {{ fetchKey?, fetchStatus?, now?: Date }} deps
+ *   fetchKey/fetchStatus injectables pour les tests.
+ * @returns {{ state, details, header, payload, statusUnknown? }}
  */
-export async function verifyBadge(jwt, { fetchKey, now = new Date() } = {}) {
+export async function verifyBadge(jwt, { fetchKey, fetchStatus, now = new Date() } = {}) {
   let decoded;
   try { decoded = decodeJwt(jwt); }
   catch { return { state: STATE.INVALID, reason: 'preuve illisible' }; }
@@ -87,7 +109,11 @@ export async function verifyBadge(jwt, { fetchKey, now = new Date() } = {}) {
   const signatureOk = await verifySignature(decoded, jwk).catch(() => false);
   if (!signatureOk) return { state: STATE.INVALID, reason: 'signature invalide' };
 
-  const state = evaluateValidity(decoded.payload, now);
   const details = { ...readDetails(decoded.payload), kidUrl };
-  return { state, details, header: decoded.header, payload: decoded.payload };
+  const getJwt = fetchStatus || (async (url) => (await fetch(url)).text());
+  const revocation = await checkRevocation(decoded.payload.credentialStatus, { getJwt, getKey });
+  if (revocation.revoked) return { state: STATE.REVOKED, details, header: decoded.header, payload: decoded.payload };
+
+  const state = evaluateValidity(decoded.payload, now);
+  return { state, details, header: decoded.header, payload: decoded.payload, statusUnknown: !revocation.checked };
 }
