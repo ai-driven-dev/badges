@@ -188,9 +188,15 @@ Un fichier YAML par membre, nommé d'après son handle GitHub, dans un répertoi
 github: <handle>          # requis — identité du badge (CT-3), = auteur de l'issue de demande
 role: certifie            # requis — certifie | habilite
 name: Prénom Nom          # requis — nom public
-linkedin: https://...     # optionnel — URL de profil
-photo: <chemin LFS>       # optionnel — ex. data/members/photos/<handle>.webp (objet Git LFS)
+linkedin: https://...     # requis — URL de profil
+photo: <chemin LFS>       # requis — data/members/photos/<handle>.webp (objet Git LFS), normalisé WebP sans EXIF
+status_index: <entier>    # requis — index permanent dans la Bitstring Status List (CT-4), assigné à l'intake
+website: https://...      # optionnel — site personnel
+description: <une ligne>  # optionnel — présentation affichée dans l'annuaire (≤ 280)
+revoked: true             # optionnel — présent = badge révoqué, sort de l'annuaire (retrait, #36)
 ```
+
+Le site public `ai-driven-dev.fr` (`/communaute`) affiche l'annuaire ; il consomme le flux **`directory.json`** publié par la CI sur `verify.ai-driven-dev.fr` (nom, LinkedIn, photo, site, description, URL de vérif). Les photos sont servies sur `verify.ai-driven-dev.fr/photos/<handle>.webp`. Les membres révoqués sont exclus du flux.
 
 **Généré au merge, pas saisi** (le job d'émission le calcule à partir de la date de merge, pour qu'un demandeur ne fixe pas lui-même sa validité) :
 

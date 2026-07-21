@@ -7,13 +7,14 @@ import { extractImageUrl, photoPathFor } from './photo-url.mjs';
 export const MEMBER_DIR = 'data/members';
 const NO_RESPONSE = '_No response_';
 
-const LIMIT = Object.freeze({ name: 120, linkedin: 200, website: 200 });
+const LIMIT = Object.freeze({ name: 120, linkedin: 200, website: 200, description: 280 });
 
 // Le heading d'un champ Issue Form = son `label`, rendu en `### <label>`.
 const HEADING = Object.freeze({
   name: 'nom complet',
   linkedin: 'profil linkedin',
   website: 'site web',
+  description: 'description',
   photo: 'photo',
 });
 
@@ -82,8 +83,15 @@ export function parsePhotoUrl(fields) {
   return url;
 }
 
+/** Description : optionnelle ; une ligne, sous la limite. */
+export function parseDescription(fields) {
+  const value = omitNoResponse(requireSingleLine(clean(fields[HEADING.description]), 'Description'));
+  if (!value) return '';
+  return requireUnderLimit(value, 'Description', LIMIT.description);
+}
+
 /** Sérialise l'enregistrement du membre en YAML plat, valeurs échappées. */
-export function toMemberYaml({ handle, name, linkedin, website, statusIndex }) {
+export function toMemberYaml({ handle, name, linkedin, website, description, statusIndex }) {
   if (!Number.isInteger(statusIndex) || statusIndex < 0) throw new RequestError('statusIndex requis');
   const lines = [
     `github: ${yamlScalar(handle)}`,
@@ -94,6 +102,7 @@ export function toMemberYaml({ handle, name, linkedin, website, statusIndex }) {
     `status_index: ${statusIndex}`, // index permanent dans la Bitstring Status List (CT-4)
   ];
   if (website) lines.push(`website: ${yamlScalar(website)}`);
+  if (description) lines.push(`description: ${yamlScalar(description)}`);
   return lines.join('\n') + '\n';
 }
 
@@ -109,6 +118,7 @@ export function buildMemberRecord(issue, statusIndex) {
   const name = parseName(fields);
   const linkedin = parseLinkedin(fields);
   const website = parseWebsite(fields);
+  const description = parseDescription(fields);
   const photoUrl = parsePhotoUrl(fields);
 
   return {
@@ -116,12 +126,13 @@ export function buildMemberRecord(issue, statusIndex) {
     name,
     linkedin,
     website,
+    description,
     statusIndex,
     photoUrl,
     photoPath: photoPathFor(handle),
     issueNumber: issue.number,
     path: `${MEMBER_DIR}/${handle}.yml`,
     branch: `certif/${handle}-${issue.number}`,
-    yaml: toMemberYaml({ handle, name, linkedin, website, statusIndex }),
+    yaml: toMemberYaml({ handle, name, linkedin, website, description, statusIndex }),
   };
 }
