@@ -1,7 +1,7 @@
 // Couche I/O (#23) : lit un enregistrement, dérive le kid de la clé active, signe
 // le credential OB3 en RS256, écrit la preuve. Logique de construction dans lib/.
 //
-// Argument : chemin d'un fichier data/members/<handle>.yml
+// Argument : chemin d'un fichier data/members/<handle>/record.yml
 // Clé privée : env SIGNING_PRIVATE_KEY (PEM PKCS8), jamais un fichier du dépôt.
 // Date : env CERTIFIED_ON (date ISO du commit d'ajout) → émission déterministe.
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
@@ -19,7 +19,7 @@ async function loadSigningKey(pem) {
 
 async function main() {
   const memberPath = process.argv[2];
-  if (!memberPath) fail('usage: sign-credential.mjs <data/members/handle.yml>');
+  if (!memberPath) fail('usage: sign-credential.mjs <data/members/handle/record.yml>');
 
   const member = parseMemberYaml(readFileSync(memberPath, 'utf8'));
   if (!member.github) fail(`github manquant dans ${memberPath}`);

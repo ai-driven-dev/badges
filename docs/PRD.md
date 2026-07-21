@@ -182,14 +182,14 @@ Le dépôt DOIT être **public**. Les verrous de confiance dont dépend tout le 
 
 ## Modèle de données
 
-Un fichier YAML par membre, nommé d'après son handle GitHub, dans un répertoire de registre (ex. `data/members/<handle>.yml`). Ces champs sont **publics et durables** (CT-12) et vivent dans Git.
+**Un dossier par membre**, nommé d'après son handle GitHub : `data/members/<handle>/record.yml` (la fiche) + `data/members/<handle>/photo.webp` (objet Git LFS). L'effacement RGPD est alors `rm -rf data/members/<handle>/`. Ces champs sont **publics et durables** (CT-12) et vivent dans Git.
 
 ```yaml
 github: <handle>          # requis — identité du badge (CT-3), = auteur de l'issue de demande
 role: certifie            # requis — certifie | habilite
 name: Prénom Nom          # requis — nom public
 linkedin: https://...     # requis — URL de profil
-photo: <chemin LFS>       # requis — data/members/photos/<handle>.webp (objet Git LFS), normalisé WebP sans EXIF
+photo: <chemin LFS>       # requis — data/members/<handle>/photo.webp (objet Git LFS), normalisé WebP sans EXIF
 status_index: <entier>    # requis — index permanent dans la Bitstring Status List (CT-4), assigné à l'intake
 website: https://...      # optionnel — site personnel
 description: <une ligne>  # optionnel — présentation affichée dans l'annuaire (≤ 280)

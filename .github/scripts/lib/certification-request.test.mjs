@@ -141,9 +141,9 @@ describe('toMemberYaml', () => {
     assert.match(yaml, /status_index: 12/);
   });
 
-  it('inscrit le chemin LFS de la photo dérivé du handle', () => {
+  it('inscrit le chemin LFS de la photo dans le dossier du membre', () => {
     const yaml = toMemberYaml({ ...base, handle: 'octocat' });
-    assert.match(yaml, /photo: "data\/members\/photos\/octocat\.webp"/);
+    assert.match(yaml, /photo: "data\/members\/octocat\/photo\.webp"/);
   });
 
   it('inscrit la description quand fournie', () => {
@@ -165,7 +165,7 @@ describe('buildMemberRecord', () => {
   it('dérive l\'identité du compte auteur, pas d\'un champ saisi', () => {
     const record = buildMemberRecord(issue({ user: { login: 'octocat' } }), 0);
     assert.equal(record.handle, 'octocat');
-    assert.equal(record.path, 'data/members/octocat.yml');
+    assert.equal(record.path, 'data/members/octocat/record.yml');
   });
 
   it('construit la branche à partir du handle et du numéro d\'issue', () => {
@@ -189,7 +189,7 @@ describe('buildMemberRecord', () => {
   it('expose l\'URL de la photo et son chemin LFS', () => {
     const record = buildMemberRecord(issue({ user: { login: 'octocat' } }), 0);
     assert.equal(record.photoUrl, 'https://github.com/user-attachments/assets/abc');
-    assert.equal(record.photoPath, 'data/members/photos/octocat.webp');
+    assert.equal(record.photoPath, 'data/members/octocat/photo.webp');
   });
 
   it('rejette une demande sans photo', () => {
