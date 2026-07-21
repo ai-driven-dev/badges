@@ -1,0 +1,12 @@
+{
+  "name": "aidd-badges-scripts",
+  "private": true,
+  "type": "module",
+  "description": "Scripts d'intake et d'émission des badges AIDD",
+  "scripts": {
+    "test": "node --test"
+  },
+  "dependencies": {
+    "jose": "^6.2.3"
+  }
+}

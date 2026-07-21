@@ -1,0 +1,27 @@
+# Tests unitaires des scripts d'intake et d'émission. Check requis sur les PR
+# qui touchent .github/scripts.
+name: Tests des scripts
+
+on:
+  push:
+    branches: [main]
+    paths: [".github/scripts/**"]
+  pull_request:
+    paths: [".github/scripts/**"]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: .github/scripts
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: "20"
+      - run: npm ci
+      - run: npm test
