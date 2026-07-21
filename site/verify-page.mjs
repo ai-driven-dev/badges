@@ -29,7 +29,15 @@ export function render(root, result) {
         <dt>Émetteur</dt><dd>${d.issuer || '—'}</dd>
         <dt>Émis le</dt><dd>${fmtDate(d.validFrom)}</dd>
         <dt>Valable jusqu'au</dt><dd>${fmtDate(d.validUntil)}</dd>
-      </dl>`;
+      </dl>
+      <figure class="qr">
+        <img src="./qr.svg" alt="QR code de vérification" width="140" height="140">
+        <figcaption>Scanne pour vérifier</figcaption>
+      </figure>
+      <p class="downloads">
+        <a href="./qr.svg" download="qr.svg">⤓ QR code</a>
+        <a href="./credential.jwt" download="credential.jwt">⤓ Preuve brute (VC-JWT)</a>
+      </p>`;
 
   root.className = `result ${label.tone}`;
   root.innerHTML = `

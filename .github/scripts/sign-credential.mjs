@@ -7,6 +7,7 @@
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { importPKCS8, exportJWK, calculateJwkThumbprint, SignJWT } from 'jose';
 import { parseMemberYaml, buildCredential, keyUrl, DEFAULT_BASE } from './lib/credential.mjs';
+import { generateQrSvg } from './lib/qr.mjs';
 
 function fail(message) { console.error(message); process.exit(2); }
 
@@ -50,7 +51,8 @@ async function main() {
   mkdirSync(outDir, { recursive: true });
   writeFileSync(new URL('credential.jwt', outDir), jwt); // pas de newline final (SP4)
   writeFileSync(new URL('credential.json', outDir), JSON.stringify(credential, null, 2));
-  console.log(`Émis : u/${member.github}/credential.jwt (kid=${kid}, expire ${credential.validUntil})`);
+  writeFileSync(new URL('qr.svg', outDir), await generateQrSvg(member.github)); // QR de vérif (#60)
+  console.log(`Émis : u/${member.github}/credential.jwt (+qr.svg, kid=${kid}, expire ${credential.validUntil})`);
 }
 
 main();

@@ -42,6 +42,25 @@ describe('render', () => {
     assert.match(root.innerHTML, /sans dépendre d'un serveur AIDD/);
     assert.match(root.innerHTML, /vc\.1ed\.tech/);
   });
+
+  it('affiche le QR code et les téléchargements pour un badge authentifié', () => {
+    const root = fakeElement();
+
+    render(root, { state: STATE.VALID, details: { handle: 'jd' } });
+
+    assert.match(root.innerHTML, /src="\.\/qr\.svg"/);
+    assert.match(root.innerHTML, /href="\.\/qr\.svg" download/);
+    assert.match(root.innerHTML, /href="\.\/credential\.jwt" download/);
+  });
+
+  it('n\'affiche ni QR ni téléchargements pour un badge invalide', () => {
+    const root = fakeElement();
+
+    render(root, { state: STATE.INVALID, reason: 'signature invalide' });
+
+    assert.doesNotMatch(root.innerHTML, /qr\.svg/);
+    assert.doesNotMatch(root.innerHTML, /credential\.jwt/);
+  });
 });
 
 describe('mount', () => {
