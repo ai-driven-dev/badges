@@ -1,13 +1,12 @@
-# Tests unitaires des scripts d'intake et d'émission. Check requis sur les PR
-# qui touchent .github/scripts.
-name: Tests des scripts
+# Tests unitaires : scripts d'intake/émission + code de vérif navigateur.
+name: Tests
 
 on:
   push:
     branches: [main]
-    paths: [".github/scripts/**"]
+    paths: [".github/scripts/**", "site/**"]
   pull_request:
-    paths: [".github/scripts/**"]
+    paths: [".github/scripts/**", "site/**"]
 
 permissions:
   contents: read
@@ -15,9 +14,12 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        dir: [.github/scripts, site]
     defaults:
       run:
-        working-directory: .github/scripts
+        working-directory: ${{ matrix.dir }}
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4

@@ -53,6 +53,8 @@ jobs:
               echo "::warning::pas de commit d'ajout pour $f, ignoré"; continue
             fi
             CERTIFIED_ON="$certified_on" node .github/scripts/sign-credential.mjs "$f"
+            handle="$(basename "$f" .yml)"
+            cp site/badge-page.html "u/$handle/index.html"   # page de vérif du membre
             count=$((count+1))
           done
           echo "émis: $count credential(s)"
@@ -61,6 +63,8 @@ jobs:
         run: |
           mkdir -p _site/keys _site/u
           cp public/issuer.json _site/issuer.json
+          cp site/verify.mjs site/verify-page.mjs _site/            # code de vérif (navigateur)
+          cp site/verify.html _site/index.html                     # page de vérif générique
           if [ -d keys ]; then cp keys/*.json _site/keys/ 2>/dev/null || true; fi
           if [ -d u ]; then cp -r u/* _site/u/ 2>/dev/null || true; fi
           echo "verify.ai-driven-dev.fr" > _site/CNAME

@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Vérification d'un badge — AI-Driven Development</title>
+  <style>
+    :root { color-scheme: light dark; }
+    body { font-family: system-ui, sans-serif; max-width: 40rem; margin: 4rem auto; padding: 0 1rem; line-height: 1.5; }
+    .result { border: 1px solid; border-radius: .75rem; padding: 1.5rem 2rem; }
+    .result h1 { margin-top: 0; font-size: 1.5rem; }
+    .ok { border-color: #1a7f37; } .ok h1 { color: #1a7f37; }
+    .warn { border-color: #9a6700; } .warn h1 { color: #9a6700; }
+    .bad { border-color: #cf222e; } .bad h1 { color: #cf222e; }
+    dl { display: grid; grid-template-columns: auto 1fr; gap: .35rem 1rem; margin: 1rem 0; }
+    dt { font-weight: 600; } dd { margin: 0; }
+    .independent { font-size: .85rem; opacity: .8; margin-top: 1.5rem; }
+    .loading { opacity: .6; }
+  </style>
+</head>
+<body>
+  <main id="app" class="loading"><h1>Vérification en cours…</h1></main>
+  <script type="module">
+    import { mount } from './verify-page.mjs';
+    mount();
+  </script>
+</body>
+</html>
