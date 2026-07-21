@@ -46,7 +46,7 @@ jobs:
           # (Volume faible, PR relues en série ; une collision improbable serait vue au merge.)
           max=-1
           shopt -s nullglob
-          for f in data/members/*.yml; do
+          for f in data/members/*/record.yml; do
             i="$(grep -oE '^status_index:[[:space:]]*[0-9]+' "$f" | grep -oE '[0-9]+' || true)"
             if [ -n "$i" ] && [ "$i" -gt "$max" ]; then max="$i"; fi
           done

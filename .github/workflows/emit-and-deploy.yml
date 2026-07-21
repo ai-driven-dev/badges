@@ -2,7 +2,7 @@
 # régénère TOUS les credentials de façon déterministe et déploie le site statique
 # sur GitHub Pages : clés publiques, profil issuer, une preuve VC-JWT par membre.
 #
-# Déterminisme : certified_on = date du commit qui a ajouté data/members/<handle>.yml.
+# Déterminisme : certified_on = date du commit qui a ajouté data/members/<handle>/record.yml.
 # RS256 étant déterministe, régénérer produit le même credential — aucune preuve
 # n'est committée, aucun contournement de la protection de main n'est requis.
 name: Émettre et publier
@@ -52,13 +52,15 @@ jobs:
         run: |
           shopt -s nullglob
           count=0
-          for f in data/members/*.yml; do
+          for d in data/members/*/; do
+            f="${d}record.yml"
+            [ -f "$f" ] || continue
             certified_on="$(git log --diff-filter=A --format=%aI -- "$f" | tail -1)"
             if [ -z "$certified_on" ]; then
               echo "::warning::pas de commit d'ajout pour $f, ignoré"; continue
             fi
             CERTIFIED_ON="$certified_on" node .github/scripts/sign-credential.mjs "$f"
-            handle="$(basename "$f" .yml)"
+            handle="$(basename "$d")"
             cp site/badge-page.html "u/$handle/index.html"   # page de vérif du membre
             count=$((count+1))
           done
@@ -85,7 +87,10 @@ jobs:
           cp directory.json _site/directory.json                   # flux annuaire (#33/#49)
           if [ -d keys ]; then cp keys/*.json _site/keys/ 2>/dev/null || true; fi
           if [ -d u ]; then cp -r u/* _site/u/ 2>/dev/null || true; fi
-          if [ -d data/members/photos ]; then cp data/members/photos/*.webp _site/photos/ 2>/dev/null || true; fi
+          for p in data/members/*/photo.webp; do            # publier la photo sous /photos/<handle>.webp
+            [ -f "$p" ] || continue
+            h="$(basename "$(dirname "$p")")"; cp "$p" "_site/photos/$h.webp"
+          done
           if [ -f status/1 ]; then cp status/1 _site/status/1; fi
           echo "verify.ai-driven-dev.fr" > _site/CNAME
 

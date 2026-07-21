@@ -3,7 +3,8 @@
 import sharp from 'sharp';
 
 export const MAX_BYTES = 10 * 1024 * 1024; // garde-fou téléchargement
-export { PHOTO_DIR, photoPathFor, extractImageUrl } from './photo-url.mjs';
+export { extractImageUrl } from './photo-url.mjs';
+export { photoPathFor } from './member-paths.mjs';
 
 /**
  * Télécharge une image, en refusant ce qui n'est pas une image ou est trop lourd.

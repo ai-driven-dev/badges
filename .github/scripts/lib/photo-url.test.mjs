@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { extractImageUrl, photoPathFor } from './photo-url.mjs';
+import { extractImageUrl } from './photo-url.mjs';
 
 describe('extractImageUrl', () => {
   it('extrait l\'URL d\'une image markdown', () => {
@@ -22,11 +22,5 @@ describe('extractImageUrl', () => {
   it('préfère l\'URL markdown à une éventuelle URL nue autour', () => {
     const url = extractImageUrl('texte https://autre.com ![x](https://vrai.com/i.webp)');
     assert.equal(url, 'https://vrai.com/i.webp');
-  });
-});
-
-describe('photoPathFor', () => {
-  it('construit le chemin LFS depuis le handle', () => {
-    assert.equal(photoPathFor('octocat'), 'data/members/photos/octocat.webp');
   });
 });

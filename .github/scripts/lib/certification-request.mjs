@@ -2,9 +2,9 @@
 // Identité = auteur de l'issue (compte GitHub), jamais un champ saisi (CT-3).
 // Fonctions pures : ni lecture d'event, ni écriture de fichier.
 import { clean, parseIssueFormBody } from './issue-form.mjs';
-import { extractImageUrl, photoPathFor } from './photo-url.mjs';
+import { extractImageUrl } from './photo-url.mjs';
+import { recordPathFor, photoPathFor } from './member-paths.mjs';
 
-export const MEMBER_DIR = 'data/members';
 const NO_RESPONSE = '_No response_';
 
 const LIMIT = Object.freeze({ name: 120, linkedin: 200, website: 200, description: 280 });
@@ -131,7 +131,7 @@ export function buildMemberRecord(issue, statusIndex) {
     photoUrl,
     photoPath: photoPathFor(handle),
     issueNumber: issue.number,
-    path: `${MEMBER_DIR}/${handle}.yml`,
+    path: recordPathFor(handle),
     branch: `certif/${handle}-${issue.number}`,
     yaml: toMemberYaml({ handle, name, linkedin, website, description, statusIndex }),
   };

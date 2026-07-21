@@ -3,21 +3,18 @@
 // signée RS256, et l'écrit à `status/1`. Exécuté au build, dans l'env `signing`.
 //
 // Clé privée : env SIGNING_PRIVATE_KEY. Date : env STATUS_ISSUED_ON (déterministe).
-import { readFileSync, writeFileSync, mkdirSync, readdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { importPKCS8, SignJWT } from 'jose';
 import { parseMemberYaml } from './lib/credential.mjs';
 import { buildStatusListCredential } from './lib/status-list.mjs';
+import { listMemberHandles, recordPathFor } from './lib/member-paths.mjs';
 
 function fail(m) { console.error(m); process.exit(2); }
 
-const MEMBER_DIR = 'data/members';
-
 function collectRevokedIndices() {
-  let files = [];
-  try { files = readdirSync(MEMBER_DIR).filter((f) => f.endsWith('.yml')); } catch { files = []; }
   const revoked = [];
-  for (const f of files) {
-    const m = parseMemberYaml(readFileSync(`${MEMBER_DIR}/${f}`, 'utf8'));
+  for (const h of listMemberHandles()) {
+    const m = parseMemberYaml(readFileSync(recordPathFor(h), 'utf8'));
     if (String(m.revoked) === 'true') revoked.push(Number(m.status_index));
   }
   return revoked.filter((i) => Number.isInteger(i) && i >= 0);
