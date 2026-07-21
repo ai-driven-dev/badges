@@ -1,0 +1,8 @@
+# Photos des membres -> Git LFS (CT-12). Le binaire reste hors de l'historique
+# principal : l'effacement RGPD est une suppression d'objet LFS, pas une
+# réécriture d'historique (`git rm` ne purge pas le passé).
+# Scopé aux formats image du dossier photos (le README reste en Git normal).
+data/members/photos/*.webp filter=lfs diff=lfs merge=lfs -text
+data/members/photos/*.png  filter=lfs diff=lfs merge=lfs -text
+data/members/photos/*.jpg  filter=lfs diff=lfs merge=lfs -text
+data/members/photos/*.jpeg filter=lfs diff=lfs merge=lfs -text
