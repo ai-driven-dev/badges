@@ -2,6 +2,7 @@
 // Identité = auteur de l'issue (compte GitHub), jamais un champ saisi (CT-3).
 // Fonctions pures : ni lecture d'event, ni écriture de fichier.
 import { clean, parseIssueFormBody } from './issue-form.mjs';
+import { extractImageUrl, photoPathFor } from './photo-url.mjs';
 
 export const MEMBER_DIR = 'data/members';
 const NO_RESPONSE = '_No response_';
@@ -13,6 +14,7 @@ const HEADING = Object.freeze({
   name: 'nom complet',
   linkedin: 'profil linkedin',
   website: 'site web',
+  photo: 'photo',
 });
 
 const GITHUB_HANDLE_RE = /^[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,37}[a-zA-Z0-9])?$/;
@@ -73,6 +75,13 @@ export function parseWebsite(fields) {
   return value;
 }
 
+/** Photo : requise. Rend l'URL de l'image déposée dans le champ. */
+export function parsePhotoUrl(fields) {
+  const url = extractImageUrl(omitNoResponse(clean(fields[HEADING.photo])));
+  if (!url) throw new RequestError('Photo requise');
+  return url;
+}
+
 /** Sérialise l'enregistrement du membre en YAML plat, valeurs échappées. */
 export function toMemberYaml({ handle, name, linkedin, website, statusIndex }) {
   if (!Number.isInteger(statusIndex) || statusIndex < 0) throw new RequestError('statusIndex requis');
@@ -81,6 +90,7 @@ export function toMemberYaml({ handle, name, linkedin, website, statusIndex }) {
     `role: "certifie"`,
     `name: ${yamlScalar(name)}`,
     `linkedin: ${yamlScalar(linkedin)}`,
+    `photo: ${yamlScalar(photoPathFor(handle))}`, // objet Git LFS (#16), normalisé à l'intake (#21)
     `status_index: ${statusIndex}`, // index permanent dans la Bitstring Status List (CT-4)
   ];
   if (website) lines.push(`website: ${yamlScalar(website)}`);
@@ -99,6 +109,7 @@ export function buildMemberRecord(issue, statusIndex) {
   const name = parseName(fields);
   const linkedin = parseLinkedin(fields);
   const website = parseWebsite(fields);
+  const photoUrl = parsePhotoUrl(fields);
 
   return {
     handle,
@@ -106,6 +117,8 @@ export function buildMemberRecord(issue, statusIndex) {
     linkedin,
     website,
     statusIndex,
+    photoUrl,
+    photoPath: photoPathFor(handle),
     issueNumber: issue.number,
     path: `${MEMBER_DIR}/${handle}.yml`,
     branch: `certif/${handle}-${issue.number}`,

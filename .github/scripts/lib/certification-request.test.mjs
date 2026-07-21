@@ -7,14 +7,18 @@ import {
   parseName,
   parseLinkedin,
   parseWebsite,
+  parsePhotoUrl,
   toMemberYaml,
 } from './certification-request.mjs';
 
-function issueBody({ name = 'Jean Dupont', linkedin = 'https://www.linkedin.com/in/jd', website = '' } = {}) {
+const PHOTO_MD = '![moi](https://github.com/user-attachments/assets/abc)';
+
+function issueBody({ name = 'Jean Dupont', linkedin = 'https://www.linkedin.com/in/jd', website = '', photo = PHOTO_MD } = {}) {
   return [
     `### Nom complet\n\n${name}`,
     `### Profil LinkedIn\n\n${linkedin}`,
     `### Site web\n\n${website || '_No response_'}`,
+    `### Photo\n\n${photo || '_No response_'}`,
   ].join('\n\n');
 }
 
@@ -87,6 +91,17 @@ describe('parseWebsite', () => {
   });
 });
 
+describe('parsePhotoUrl', () => {
+  it('extrait l\'URL d\'une image collée en markdown', () => {
+    const url = parsePhotoUrl({ photo: '![x](https://github.com/user-attachments/assets/abc)' });
+    assert.equal(url, 'https://github.com/user-attachments/assets/abc');
+  });
+
+  it('rejette une demande sans photo', () => {
+    assert.throws(() => parsePhotoUrl({ photo: '_No response_' }), RequestError);
+  });
+});
+
 describe('toMemberYaml', () => {
   const base = { handle: 'jd', name: 'Jean', linkedin: 'https://linkedin.com/in/jd', website: '', statusIndex: 0 };
 
@@ -108,6 +123,11 @@ describe('toMemberYaml', () => {
   it('inscrit l\'index de statut', () => {
     const yaml = toMemberYaml({ ...base, statusIndex: 12 });
     assert.match(yaml, /status_index: 12/);
+  });
+
+  it('inscrit le chemin LFS de la photo dérivé du handle', () => {
+    const yaml = toMemberYaml({ ...base, handle: 'octocat' });
+    assert.match(yaml, /photo: "data\/members\/photos\/octocat\.webp"/);
   });
 
   it('rejette un index de statut absent', () => {
@@ -138,6 +158,16 @@ describe('buildMemberRecord', () => {
     const record = buildMemberRecord(issue(), 7);
     assert.equal(record.statusIndex, 7);
     assert.match(record.yaml, /status_index: 7/);
+  });
+
+  it('expose l\'URL de la photo et son chemin LFS', () => {
+    const record = buildMemberRecord(issue({ user: { login: 'octocat' } }), 0);
+    assert.equal(record.photoUrl, 'https://github.com/user-attachments/assets/abc');
+    assert.equal(record.photoPath, 'data/members/photos/octocat.webp');
+  });
+
+  it('rejette une demande sans photo', () => {
+    assert.throws(() => buildMemberRecord(issue({ body: issueBody({ photo: '_No response_' }) }), 0), RequestError);
   });
 
   it('rejette une demande dont le LinkedIn est manquant', () => {

@@ -116,6 +116,18 @@ jobs:
           mkdir -p "$(dirname "$MEMBER_PATH")"
           printf '%s' "$RECORD" > "$MEMBER_PATH"
 
+      - name: Installer les dépendances des scripts
+        if: steps.request.outcome == 'success' && steps.duplicate.outputs.found == 'false' && steps.existing-pr.outputs.url == ''
+        run: cd .github/scripts && npm ci
+
+      - name: Traiter la photo (WebP + strip EXIF + LFS)
+        if: steps.request.outcome == 'success' && steps.duplicate.outputs.found == 'false' && steps.existing-pr.outputs.url == ''
+        env:
+          PHOTO_URL: ${{ steps.request.outputs.photo_url }}
+          PHOTO_PATH: ${{ steps.request.outputs.photo_path }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: node .github/scripts/process-photo.mjs
+
       - name: Committer et ouvrir la PR
         id: pull-request
         if: steps.request.outcome == 'success' && steps.duplicate.outputs.found == 'false' && steps.existing-pr.outputs.url == ''
@@ -125,16 +137,17 @@ jobs:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
           GITHUB_HANDLE: ${{ steps.request.outputs.github }}
           MEMBER_PATH: ${{ steps.request.outputs.path }}
+          PHOTO_PATH: ${{ steps.request.outputs.photo_path }}
         run: |
           git config user.name "aidd-badges-intake-bot"
           git config user.email "actions@github.com"
           git switch -c "$BRANCH"
-          git add "$MEMBER_PATH"
+          git add "$MEMBER_PATH" "$PHOTO_PATH"   # la photo part en pointeur LFS (#16)
           git commit -m "Inscription au registre : $GITHUB_HANDLE"
           git push -u origin "$BRANCH"
           pr_url="$(gh pr create \
             --title "Inscription : $DISPLAY_NAME (@$GITHUB_HANDLE)" \
-            --body "PR d'inscription générée depuis le formulaire pour @$GITHUB_HANDLE. Relire l'enregistrement YAML et merger si accepté. La photo est traitée séparément (#21). Le badge est émis à la fusion (#23)." \
+            --body "PR d'inscription générée depuis le formulaire pour @$GITHUB_HANDLE. Relire l'enregistrement YAML et la photo (normalisée en WebP, sans EXIF, en LFS) puis merger si accepté. Le badge est émis à la fusion (#23)." \
             --head "$BRANCH" --base main)"
           echo "url=$pr_url" >> "$GITHUB_OUTPUT"
 

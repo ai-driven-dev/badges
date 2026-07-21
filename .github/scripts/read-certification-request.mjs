@@ -10,6 +10,8 @@ function writeOutputs(output, record) {
     path: record.path,
     branch: record.branch,
     issue_number: record.issueNumber,
+    photo_url: record.photoUrl,
+    photo_path: record.photoPath,
   };
   for (const [key, value] of Object.entries(scalars)) {
     appendFileSync(output, `${key}=${value}\n`);
