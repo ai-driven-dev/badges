@@ -30,6 +30,21 @@ export function addYears(date, years) {
   return next;
 }
 
+/**
+ * Date d'émission d'un badge : le renouvellement (`renewed_on`) prime sur la date
+ * de première certification (#27). Déterministe (les deux sont des dates fixes).
+ * @param {string|undefined} renewedOn  date ISO de renouvellement, optionnelle
+ * @param {string|undefined} certifiedOn  date ISO de première certification
+ * @returns {Date}
+ */
+export function resolveEmissionDate(renewedOn, certifiedOn) {
+  const source = (renewedOn && String(renewedOn).trim()) || certifiedOn;
+  if (!source) throw new Error("aucune date d'émission (renewed_on ou certifiedOn requis)");
+  const date = new Date(source);
+  if (Number.isNaN(date.getTime())) throw new Error(`date d'émission invalide : ${source}`);
+  return date;
+}
+
 /** urn:uuid déterministe dérivé du handle et de la date d'émission. */
 export function deterministicUuid(handle, date) {
   const seed = `${handle}:${date.getTime()}`;

@@ -7,6 +7,7 @@ import {
   deterministicUuid,
   buildCredential,
   keyUrl,
+  resolveEmissionDate,
 } from './credential.mjs';
 
 describe('parseMemberYaml', () => {
@@ -56,6 +57,31 @@ describe('deterministicUuid', () => {
   it('respecte le format urn:uuid v4', () => {
     const uuid = deterministicUuid('jd', new Date('2026-07-21T10:00:00Z'));
     assert.match(uuid, /^urn:uuid:[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-8[0-9a-f]{3}-[0-9a-f]{12}$/);
+  });
+});
+
+describe('resolveEmissionDate', () => {
+  it('utilise la date de première certification en l\'absence de renouvellement', () => {
+    const d = resolveEmissionDate(undefined, '2026-01-01T00:00:00Z');
+    assert.equal(isoSeconds(d), '2026-01-01T00:00:00Z');
+  });
+
+  it('donne priorité à renewed_on quand il est présent', () => {
+    const d = resolveEmissionDate('2027-03-01T00:00:00Z', '2026-01-01T00:00:00Z');
+    assert.equal(isoSeconds(d), '2027-03-01T00:00:00Z');
+  });
+
+  it('ignore un renewed_on vide et retombe sur la première certification', () => {
+    const d = resolveEmissionDate('   ', '2026-01-01T00:00:00Z');
+    assert.equal(isoSeconds(d), '2026-01-01T00:00:00Z');
+  });
+
+  it('rejette l\'absence totale de date', () => {
+    assert.throws(() => resolveEmissionDate(undefined, undefined), /aucune date/);
+  });
+
+  it('rejette une date invalide', () => {
+    assert.throws(() => resolveEmissionDate('pas une date', undefined), /invalide/);
   });
 });
 

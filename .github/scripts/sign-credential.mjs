@@ -6,7 +6,7 @@
 // Date : env CERTIFIED_ON (date ISO du commit d'ajout) → émission déterministe.
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { importPKCS8, exportJWK, calculateJwkThumbprint, SignJWT } from 'jose';
-import { parseMemberYaml, buildCredential, keyUrl, DEFAULT_BASE } from './lib/credential.mjs';
+import { parseMemberYaml, buildCredential, keyUrl, resolveEmissionDate, DEFAULT_BASE } from './lib/credential.mjs';
 import { generateQrSvg } from './lib/qr.mjs';
 
 function fail(message) { console.error(message); process.exit(2); }
@@ -26,10 +26,11 @@ async function main() {
   const statusIndex = Number(member.status_index);
   if (!Number.isInteger(statusIndex) || statusIndex < 0) fail(`status_index manquant/invalide dans ${memberPath}`);
 
-  const certifiedOn = process.env.CERTIFIED_ON;
-  if (!certifiedOn) fail("CERTIFIED_ON absent (date ISO du commit d'ajout)");
-  const issuedAt = new Date(certifiedOn);
-  if (Number.isNaN(issuedAt.getTime())) fail(`CERTIFIED_ON invalide : ${certifiedOn}`);
+  // Renouvellement (#27) : renewed_on du record prime sur la date de première
+  // certification (CERTIFIED_ON = date du commit d'ajout).
+  let issuedAt;
+  try { issuedAt = resolveEmissionDate(member.renewed_on, process.env.CERTIFIED_ON); }
+  catch (e) { fail(e.message); }
 
   const privateKey = await loadSigningKey(process.env.SIGNING_PRIVATE_KEY);
   // Le thumbprint ignore `d` → identique au kid de la clé publique publiée.
