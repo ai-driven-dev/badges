@@ -193,7 +193,13 @@ photo: <chemin LFS>       # requis — data/members/<handle>/photo.webp (objet G
 status_index: <entier>    # requis — index permanent dans la Bitstring Status List (CT-4), assigné à l'intake
 website: https://...      # optionnel — site personnel
 description: <une ligne>  # optionnel — présentation affichée dans l'annuaire (≤ 280)
+renewed_on: <date ISO>    # optionnel — renouvellement (#27) : prime sur la date de 1re certif
 ```
+
+**Renouvellement (#27).** Par défaut, la date d'émission = date du commit qui a
+ajouté le record (1re certification). Un renouvellement fixe `renewed_on` dans le
+record : l'émission repart de cette date (nouvelle fenêtre de 1 an). Une preuve
+déjà exportée garde son ancienne échéance et reste valide jusque-là.
 
 **Retrait RGPD (#36).** Un retrait **supprime tout le dossier** `data/members/<handle>/` (fiche + photo LFS) — l'effacement, pas une réécriture d'historique. Pour que le badge reste révoqué à vie malgré la disparition de la fiche, son `status_index` est inscrit dans un **registre de révocation** `data/revoked.json` (une liste d'entiers — pas de donnée personnelle). La liste de statuts (CT-4) se construit à partir de ce registre. Une preuve déjà exportée reste présentable mais apparaît **révoquée** à la vérification (CT-5, seule voie).
 
