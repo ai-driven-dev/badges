@@ -1,7 +1,21 @@
 // Construction du credential Open Badges 3.0 (forme prouvée conforme au validateur
 // 1EdTech, spike SP4). Fonctions pures : la signature est faite ailleurs (jose).
 
-export const DEFAULT_BASE = 'https://verify.ai-driven-dev.fr';
+// Deux hébergements distincts :
+// - DATA_BASE : GitHub Pages, l'ancre permanente. Clés, statut, issuer, preuves.
+//   Doit vivre à vie (sinon badges invérifiables) -> uptime GitHub. C'est aussi le fallback.
+// - SITE_BASE : le site (VPS, Astro), la belle page de vérif que le badge fait ouvrir.
+//   Lit les données depuis DATA_BASE et les rend au design.
+export const DATA_BASE = process.env.DATA_BASE || 'https://ai-driven-dev.github.io/badges';
+export const SITE_BASE = process.env.SITE_BASE || 'https://verify.ai-driven-dev.fr';
+
+// Rétrocompat : DEFAULT_BASE = la base des données signées.
+export const DEFAULT_BASE = DATA_BASE;
+
+/** URL de la belle page de vérif d'un membre (sur le site). */
+export function siteVerifyUrl(handle, base = SITE_BASE) {
+  return `${base}/u/${handle}`;
+}
 
 /** Parse un enregistrement YAML plat `clé: "valeur"` (valeurs échappées en JSON). */
 export function parseMemberYaml(text) {

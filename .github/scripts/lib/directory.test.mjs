@@ -9,7 +9,7 @@ const member = (over = {}) => ({
 
 describe('photoUrlFor', () => {
   it('pointe vers la photo servie sur le domaine de vérif', () => {
-    assert.equal(photoUrlFor('jd'), 'https://verify.ai-driven-dev.fr/photos/jd.webp');
+    assert.equal(photoUrlFor("jd"), "https://ai-driven-dev.github.io/badges/photos/jd.webp");
   });
 });
 
@@ -19,7 +19,7 @@ describe('toDirectoryEntry', () => {
     assert.equal(e.handle, 'jd');
     assert.equal(e.name, 'Jean Dupont');
     assert.equal(e.linkedin, 'https://linkedin.com/in/jd');
-    assert.equal(e.photo, 'https://verify.ai-driven-dev.fr/photos/jd.webp');
+    assert.equal(e.photo, "https://ai-driven-dev.github.io/badges/photos/jd.webp");
     assert.equal(e.verify, 'https://verify.ai-driven-dev.fr/u/jd');
   });
 

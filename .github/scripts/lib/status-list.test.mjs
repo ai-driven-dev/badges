@@ -30,7 +30,7 @@ describe('buildStatusListCredential', () => {
 
   it('porte l\'identifiant stable de la liste de statuts', async () => {
     const credential = await buildStatusListCredential([], { issuedOn });
-    assert.equal(credential.id, 'https://verify.ai-driven-dev.fr/status/1');
+    assert.equal(credential.id, 'https://ai-driven-dev.github.io/badges/status/1');
   });
 
   it('rejette une date d\'émission invalide', async () => {

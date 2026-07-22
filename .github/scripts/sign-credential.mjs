@@ -36,12 +36,12 @@ async function main() {
   // Le thumbprint ignore `d` → identique au kid de la clé publique publiée.
   const kid = await calculateJwkThumbprint(await exportJWK(privateKey));
 
-  // BASE permet de tester en local (ex. http://localhost:8000) ; défaut = domaine réel.
-  const base = process.env.BASE || DEFAULT_BASE;
-  const credential = buildCredential({ handle: member.github, name: member.name, statusIndex }, { certifiedOn: issuedAt, base });
+  // Le credential (clés, statut, issuer) est ancré sur les DONNÉES (Pages, DEFAULT_BASE).
+  // Le QR, lui, pointe vers la belle page du site (SITE_BASE, défaut dans qr.mjs).
+  const credential = buildCredential({ handle: member.github, name: member.name, statusIndex }, { certifiedOn: issuedAt });
 
   const jwt = await new SignJWT(credential)
-    .setProtectedHeader({ alg: 'RS256', typ: 'JWT', kid: keyUrl(kid, base) })
+    .setProtectedHeader({ alg: 'RS256', typ: 'JWT', kid: keyUrl(kid) })
     .setIssuer(credential.issuer.id)
     .setSubject(credential.credentialSubject.id)
     .setJti(credential.id)
