@@ -17,6 +17,20 @@ sur LinkedIn et ailleurs.
 
 Les flux détaillés (avec diagrammes) : **[`docs/PROCESS.md`](docs/PROCESS.md)**.
 
+## Pourquoi ces choix
+
+- **Open Badges 3.0, pas une image.** Un badge doit prouver *qui l'a émis*. Une image se
+  copie ; une signature cryptographique, non. On émet une preuve signée, pas un joli PNG.
+- **Vérification indépendante.** Un employeur méfiant ne devrait pas avoir à *nous* faire
+  confiance. La signature se vérifie dans son navigateur, ou avec un outil tiers (validateur
+  public 1EdTech), sans passer par nos serveurs.
+- **Git-natif.** Pas d'appli à héberger : le registre est des fichiers, l'autorité est le
+  *merge* d'un mainteneur, l'audit est l'historique Git. Simple, transparent, durable.
+- **Aucun email.** L'identité, c'est le compte GitHub (prouvé à l'inscription). Pas de
+  magasin d'emails à sécuriser ni à effacer — moins de données, moins de risque RGPD.
+- **La clé privée ne bouge pas.** Elle ne sert qu'à signer, en CI, dans un environnement
+  gaté. Jamais dans le dépôt, jamais sur un serveur exposé. Sa fuite = badges forgés.
+
 ## Architecture
 
 Deux dépôts. **Celui-ci** = la machinerie et les données (signature, vérif, flux) ;
@@ -47,7 +61,18 @@ consommant `directory.json`.
 3. **Le dépôt reste public** — les verrous de confiance (protection de branche +
    environnement) l'exigent au plan gratuit (CT-14).
 
+## Tester en local (sans DNS)
+
+```bash
+cd .github/scripts && npm ci
+npm test        # ~140 tests (intake, émission, vérif, révocation, annuaire)
+npm run demo    # signe un badge de démo et sert tout en localhost
+```
+
+`npm run demo` ouvre `http://localhost:8000/u/demo` : la **page de vérification réelle**,
+qui contrôle la signature dans le navigateur — sans domaine ni DNS.
+
 ## Statut
 
 v1 en place : inscription → émission → vérification → révocation → retrait, signé et testé.
-Reste : le domaine `verify.ai-driven-dev.fr` (DNS) et le rendu `/communaute` (autre dépôt).
+Reste : le domaine de vérification (DNS) et le rendu `/communaute` (autre dépôt).

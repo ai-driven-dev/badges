@@ -4,7 +4,8 @@
   "type": "module",
   "description": "Scripts d'intake et d'émission des badges AIDD",
   "scripts": {
-    "test": "node --test"
+    "test": "node --test",
+    "demo": "node demo.mjs"
   },
   "dependencies": {
     "jose": "^6.2.3",

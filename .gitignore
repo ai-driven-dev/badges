@@ -24,3 +24,6 @@ node_modules/
 dist/
 build/
 .DS_Store
+
+# Démo locale
+.demo-site/
