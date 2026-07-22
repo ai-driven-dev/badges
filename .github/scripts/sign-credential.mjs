@@ -36,10 +36,12 @@ async function main() {
   // Le thumbprint ignore `d` → identique au kid de la clé publique publiée.
   const kid = await calculateJwkThumbprint(await exportJWK(privateKey));
 
-  const credential = buildCredential({ handle: member.github, name: member.name, statusIndex }, { certifiedOn: issuedAt });
+  // BASE permet de tester en local (ex. http://localhost:8000) ; défaut = domaine réel.
+  const base = process.env.BASE || DEFAULT_BASE;
+  const credential = buildCredential({ handle: member.github, name: member.name, statusIndex }, { certifiedOn: issuedAt, base });
 
   const jwt = await new SignJWT(credential)
-    .setProtectedHeader({ alg: 'RS256', typ: 'JWT', kid: keyUrl(kid) })
+    .setProtectedHeader({ alg: 'RS256', typ: 'JWT', kid: keyUrl(kid, base) })
     .setIssuer(credential.issuer.id)
     .setSubject(credential.credentialSubject.id)
     .setJti(credential.id)
