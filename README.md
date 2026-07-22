@@ -2,22 +2,52 @@
 
 Certification vérifiable des membres de la communauté AI-Driven Development.
 
-Chaque membre certifié reçoit un badge dont l'authenticité est **vérifiable par un tiers de façon indépendante** (Open Badges 3.0), affichable sur LinkedIn et ailleurs. Deux rôles : **Certifié** (niveau 1) et **Habilité** (niveau 2).
+Chaque membre certifié reçoit un badge **Open Badges 3.0** (VC-JWT signé RS256) dont
+l'authenticité se **vérifie par un tiers, indépendamment de nos serveurs**, affichable
+sur LinkedIn et ailleurs.
+
+## En bref
+
+- **S'inscrire** : un formulaire ouvre une issue → un bot en fait une PR (fiche + photo
+  normalisée + commentaire de modération). Le **merge par un mainteneur émet le badge**.
+- **Vérifier** : la page `/u/<handle>` contrôle la signature **dans le navigateur** ;
+  QR code et preuve téléchargeable inclus. Le validateur public 1EdTech confirme.
+- **Révoquer / retirer** : une demande de retrait supprime le dossier (fiche + photo) et
+  révoque le badge à vie via une liste de statuts.
+
+Les flux détaillés (avec diagrammes) : **[`docs/PROCESS.md`](docs/PROCESS.md)**.
+
+## Architecture
+
+Deux dépôts. **Celui-ci** = la machinerie et les données (signature, vérif, flux) ;
+tout est de la CI + des fichiers statiques servis sur `verify.ai-driven-dev.fr` (GitHub
+Pages). Le site **`ai-driven-dev.fr`** (VPS) affiche l'annuaire sur `/communaute` en
+consommant `directory.json`.
 
 ## Structure
 
 | Chemin | Contenu |
 |---|---|
-| `docs/PRD.md` | Spécification produit + contraintes techniques + feuille de route |
-| `design/` | Kit de badges (sceau, LinkedIn, embed, signature, page de vérif) importé depuis Claude Design |
+| `docs/PRD.md` | Spécification + contraintes techniques (CT-1…CT-14) |
+| `docs/PROCESS.md` | Les flux, en diagrammes |
+| `docs/verification.md` | Vérifier un badge sans nous faire confiance |
+| `docs/rgpd/` | Information (art. 13) + justification non-AIPD |
+| `docs/spikes/` | Décisions de-risquées (conformité, domaine, photo, site) |
+| `.github/scripts/` | Intake, émission, révocation, annuaire (+ tests) |
+| `site/` | Code de vérification navigateur (+ tests) |
+| `data/members/<handle>/` | Fiche + photo d'un membre (photo en Git LFS) |
+| `design/` | Kit visuel des badges (v2) |
 
-## Garde-fous (pour plus tard)
+## Garde-fous (non négociables)
 
-Quand l'implémentation commencera, deux règles ne bougent pas :
-
-1. **La clé privée de signature ne va jamais dans le dépôt** (ni Git, ni LFS) — secret CI uniquement. Sa fuite = badges AIDD forgés indétectables.
-2. **Aucune donnée personnelle effaçable dans l'historique Git** — `git rm` n'efface pas le passé.
+1. **La clé privée de signature ne va jamais dans le dépôt** — secret d'environnement CI.
+   Sa fuite = badges AIDD forgés indétectables.
+2. **Aucune donnée personnelle effaçable dans l'historique Git** — les photos vivent en
+   LFS, le retrait est une suppression d'objet, pas une réécriture d'historique.
+3. **Le dépôt reste public** — les verrous de confiance (protection de branche +
+   environnement) l'exigent au plan gratuit (CT-14).
 
 ## Statut
 
-Planification. Le PRD (`docs/PRD.md`) est la base de discussion, pas encore un plan d'implémentation figé. Rien n'est construit.
+v1 en place : inscription → émission → vérification → révocation → retrait, signé et testé.
+Reste : le domaine `verify.ai-driven-dev.fr` (DNS) et le rendu `/communaute` (autre dépôt).
