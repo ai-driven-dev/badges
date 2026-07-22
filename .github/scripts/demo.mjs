@@ -4,7 +4,7 @@
 //
 // Usage : node .github/scripts/demo.mjs   (puis ouvrir l'URL affichée)
 import { createServer } from 'node:http';
-import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, existsSync, statSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join, extname } from 'node:path';
 import { generateKeyPair, exportJWK, calculateJwkThumbprint, SignJWT } from 'jose';
@@ -63,10 +63,11 @@ const TYPES = { '.mjs': 'text/javascript', '.json': 'application/json', '.html':
 
 const { kid } = await build();
 createServer((req, res) => {
-  let path = decodeURIComponent(req.url.split('?')[0]);
-  if (path.endsWith('/')) path += 'index.html';
-  const file = join(root, path);
-  if (!file.startsWith(root) || !existsSync(file)) { res.writeHead(404); res.end('not found'); return; }
+  const path = decodeURIComponent(req.url.split('?')[0]);
+  let file = join(root, path);
+  // Un dossier (ex. /u/demo) -> sa page index.html.
+  if (existsSync(file) && statSync(file).isDirectory()) file = join(file, 'index.html');
+  if (!file.startsWith(root) || !existsSync(file) || statSync(file).isDirectory()) { res.writeHead(404); res.end('not found'); return; }
   res.writeHead(200, { 'content-type': TYPES[extname(file)] || 'application/octet-stream' });
   res.end(readFileSync(file));
 }).listen(PORT, () => {
