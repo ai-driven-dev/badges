@@ -41,7 +41,7 @@ describe('signature du credential', () => {
     const header = decodeProtectedHeader(jwt);
 
     assert.equal(header.alg, 'RS256');
-    assert.equal(header.kid, `https://verify.ai-driven-dev.fr/keys/${kid}.json`);
+    assert.equal(header.kid, `https://ai-driven-dev.github.io/badges/keys/${kid}.json`);
   });
 
   it('rejette un JWT altéré', async () => {

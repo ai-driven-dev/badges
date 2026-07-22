@@ -3,7 +3,7 @@
     "https://www.w3.org/ns/credentials/v2",
     "https://purl.imsglobal.org/spec/ob/v3p0/context-3.0.3.json"
   ],
-  "id": "https://verify.ai-driven-dev.fr/issuer.json",
+  "id": "https://ai-driven-dev.github.io/badges/issuer.json",
   "type": ["Profile"],
   "name": "AI-Driven Development",
   "url": "https://ai-driven-dev.fr"

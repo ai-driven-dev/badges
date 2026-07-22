@@ -1,7 +1,7 @@
 # Afficher l'annuaire sur `ai-driven-dev.fr` (`/communaute`)
 
 Le repo `badges` publie la liste des certifiés en **`directory.json`** sur
-`https://verify.ai-driven-dev.fr/directory.json` (CORS ouvert). Le site principal
+`https://ai-driven-dev.github.io/badges/directory.json` (CORS ouvert). Le site principal
 n'a qu'à le **lire côté navigateur** et rendre la liste. Pas de reconstruction :
 la liste est **toujours à jour** (le fetch a lieu à l'ouverture de la page).
 
@@ -17,7 +17,7 @@ la liste est **toujours à jour** (le fetch a lieu à l'ouverture de la page).
       "name": "Ada Lovelace",
       "role": "certifie",
       "linkedin": "https://linkedin.com/in/ada",
-      "photo": "https://verify.ai-driven-dev.fr/photos/ada.webp",
+      "photo": "https://ai-driven-dev.github.io/badges/photos/ada.webp",
       "verify": "https://verify.ai-driven-dev.fr/u/ada",
       "website": "https://ada.dev",       // optionnel
       "description": "Développeuse IA"     // optionnel
@@ -27,7 +27,7 @@ la liste est **toujours à jour** (le fetch a lieu à l'ouverture de la page).
 ```
 
 Les membres retirés (RGPD) sont **absents** du flux. Photos servies sur
-`verify.ai-driven-dev.fr/photos/<handle>.webp`.
+`ai-driven-dev.github.io/badges/photos/<handle>.webp` (servies par Pages).
 
 ## Snippet à déposer (Astro ou n'importe quelle page)
 
@@ -36,7 +36,7 @@ Rendu **côté navigateur**, toujours frais, sans dépendance :
 ```astro
 ---
 // src/pages/communaute.astro (extrait) — le rendu se fait au runtime, pas au build.
-const FEED = 'https://verify.ai-driven-dev.fr/directory.json';
+const FEED = 'https://ai-driven-dev.github.io/badges/directory.json';
 ---
 <section>
   <h1>Membres certifiés</h1>

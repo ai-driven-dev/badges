@@ -87,7 +87,7 @@ describe('resolveEmissionDate', () => {
 
 describe('keyUrl', () => {
   it('construit une URL déréférençable par kid sous le domaine permanent', () => {
-    assert.equal(keyUrl('ABC'), 'https://verify.ai-driven-dev.fr/keys/ABC.json');
+    assert.equal(keyUrl('ABC'), 'https://ai-driven-dev.github.io/badges/keys/ABC.json');
   });
 });
 
@@ -133,7 +133,7 @@ describe('buildCredential', () => {
     assert.equal(credential.credentialStatus.type, 'BitstringStatusListEntry');
     assert.equal(credential.credentialStatus.statusPurpose, 'revocation');
     assert.equal(credential.credentialStatus.statusListIndex, '42');
-    assert.equal(credential.credentialStatus.statusListCredential, 'https://verify.ai-driven-dev.fr/status/1');
+    assert.equal(credential.credentialStatus.statusListCredential, 'https://ai-driven-dev.github.io/badges/status/1');
   });
 
   it('rejette une date de certification invalide', () => {

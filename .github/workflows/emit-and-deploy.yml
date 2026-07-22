@@ -53,8 +53,8 @@ jobs:
           SIGNING_PRIVATE_KEY: ${{ secrets.SIGNING_PRIVATE_KEY }}
         run: bash .github/scripts/build-site.sh
 
-      - name: Fichier CNAME (spécifique à Pages)
-        run: echo "verify.ai-driven-dev.fr" > _site/CNAME
+      # Pas de CNAME : Pages sert les DONNÉES sur ai-driven-dev.github.io/badges
+      # (l'ancre permanente). verify.ai-driven-dev.fr est le site (VPS), pas Pages.
 
       - uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3
         with:
