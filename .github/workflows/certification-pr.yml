@@ -151,6 +151,45 @@ jobs:
             --head "$BRANCH" --base main)"
           echo "url=$pr_url" >> "$GITHUB_OUTPUT"
 
+      - name: Commentaire de modération sur la PR (#22)
+        if: steps.pull-request.outputs.url != ''
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          PR_URL: ${{ steps.pull-request.outputs.url }}
+          BRANCH: ${{ steps.request.outputs.branch }}
+          GITHUB_HANDLE: ${{ steps.request.outputs.github }}
+          DISPLAY_NAME: ${{ steps.request.outputs.name }}
+          LINKEDIN: ${{ steps.request.outputs.linkedin }}
+          WEBSITE: ${{ steps.request.outputs.website }}
+          DESCRIPTION: ${{ steps.request.outputs.description }}
+          PHOTO_PATH: ${{ steps.request.outputs.photo_path }}
+        run: |
+          # URL media LFS : GitHub sert le binaire (dépôt public) -> photo rendue dans le commentaire.
+          photo_media="https://media.githubusercontent.com/media/${GITHUB_REPOSITORY}/${BRANCH}/${PHOTO_PATH}"
+          {
+            echo "## À modérer avant publication"
+            echo ""
+            echo "**Rien n'est public tant que cette PR n'est pas mergée.** Le merge émet le badge et publie la fiche."
+            echo ""
+            echo "| Champ | Valeur |"
+            echo "|---|---|"
+            echo "| Nom | ${DISPLAY_NAME} |"
+            echo "| GitHub | @${GITHUB_HANDLE} |"
+            echo "| LinkedIn | ${LINKEDIN} |"
+            echo "| Site | ${WEBSITE:-—} |"
+            echo "| Description | ${DESCRIPTION:-—} |"
+            echo ""
+            echo "Photo (normalisée WebP 512×512, EXIF retiré) :"
+            echo ""
+            echo "![Photo de @${GITHUB_HANDLE}](${photo_media})"
+            echo ""
+            echo "### Checklist"
+            echo "- [ ] Photo appropriée (visage, rien de choquant)"
+            echo "- [ ] Nom et liens cohérents et sûrs"
+            echo "- [ ] Le compte @${GITHUB_HANDLE} correspond bien à un membre certifié"
+          } > /tmp/moderation.md
+          gh pr comment "$PR_URL" --body-file /tmp/moderation.md
+
       - name: Fermer l'issue d'inscription
         if: steps.pull-request.outputs.url != ''
         env:
