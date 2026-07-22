@@ -1,7 +1,28 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { render, mount } from './verify-page.mjs';
+import { render, mount, credentialUrl, memberBase } from './verify-page.mjs';
 import { STATE } from './verify.mjs';
+
+describe('memberBase', () => {
+  it('rend la base sans slash final (URL du badge LinkedIn)', () => {
+    assert.equal(memberBase('/u/octocat'), '/u/octocat');
+  });
+
+  it('retire le slash final', () => {
+    assert.equal(memberBase('/u/octocat/'), '/u/octocat');
+  });
+
+  it('retombe sur le répertoire courant si le chemin est vide', () => {
+    assert.equal(memberBase(''), '.');
+  });
+});
+
+describe('credentialUrl', () => {
+  it('pointe vers la preuve du membre, avec ou sans slash final', () => {
+    assert.equal(credentialUrl('/u/octocat'), '/u/octocat/credential.jwt');
+    assert.equal(credentialUrl('/u/octocat/'), '/u/octocat/credential.jwt');
+  });
+});
 
 const fakeElement = () => ({ className: '', innerHTML: '' });
 
@@ -51,6 +72,15 @@ describe('render', () => {
     assert.match(root.innerHTML, /src="\.\/qr\.svg"/);
     assert.match(root.innerHTML, /href="\.\/qr\.svg" download/);
     assert.match(root.innerHTML, /href="\.\/credential\.jwt" download/);
+  });
+
+  it('utilise la base fournie pour QR et preuve (chemins absolus, URL sans slash)', () => {
+    const root = fakeElement();
+
+    render(root, { state: STATE.VALID, details: { handle: 'jd' } }, '/u/jd');
+
+    assert.match(root.innerHTML, /src="\/u\/jd\/qr\.svg"/);
+    assert.match(root.innerHTML, /href="\/u\/jd\/credential\.jwt" download/);
   });
 
   it('n\'affiche ni QR ni téléchargements pour un badge invalide', () => {
