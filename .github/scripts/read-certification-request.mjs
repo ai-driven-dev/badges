@@ -7,6 +7,9 @@ function writeOutputs(output, record) {
   const scalars = {
     github: record.handle,
     name: record.name,
+    linkedin: record.linkedin,
+    website: record.website,
+    description: record.description,
     path: record.path,
     branch: record.branch,
     issue_number: record.issueNumber,
