@@ -17,13 +17,15 @@ const fmtDate = (iso) => {
 };
 
 /**
- * Rend le résultat dans le conteneur. `base` = dossier du membre (sans slash final),
- * pour que QR et téléchargements marchent que l'URL ait un slash final ou non.
- * Pur DOM, testable via une racine injectée.
+ * Rend le résultat dans le conteneur. `base` = dossier du membre (sans slash final) ;
+ * `origin` = origine absolue (pour donner l'URL publique de la preuve). Le QR n'est
+ * PAS affiché ici (il pointerait vers cette page même — boucle) : seulement en
+ * téléchargement. Pur DOM, testable via une racine injectée.
  */
-export function render(root, result, base = '.') {
+export function render(root, result, base = '.', origin = '') {
   const label = LABELS[result.state] || LABELS[STATE.INVALID];
   const d = result.details || {};
+  const proofUrl = `${origin}${base}/credential.jwt`;
   const rows = result.state === STATE.INVALID
     ? `<p class="reason">${result.reason || 'Ce badge n\'a pas pu être authentifié.'}</p>`
     : `
@@ -34,21 +36,19 @@ export function render(root, result, base = '.') {
         <dt>Émis le</dt><dd>${fmtDate(d.validFrom)}</dd>
         <dt>Valable jusqu'au</dt><dd>${fmtDate(d.validUntil)}</dd>
       </dl>
-      <figure class="qr">
-        <img src="${base}/qr.svg" alt="QR code de vérification" width="140" height="140">
-        <figcaption>Scanne pour vérifier</figcaption>
-      </figure>
       <p class="downloads">
-        <a href="${base}/qr.svg" download="qr.svg">⤓ QR code</a>
-        <a href="${base}/credential.jwt" download="credential.jwt">⤓ Preuve brute (VC-JWT)</a>
-      </p>`;
+        <a href="${base}/credential.jwt" download="credential.jwt">⤓ Télécharger la preuve</a>
+        <a href="${base}/qr.svg" download="qr.svg">⤓ QR code (à afficher ailleurs)</a>
+      </p>
+      <p class="third-party">Vérifier avec un outil indépendant :
+      dépose la preuve sur <a href="https://vc.1ed.tech" rel="noopener">le validateur public 1EdTech</a>,
+      ou donne-lui l'URL de la preuve :<br><code>${proofUrl}</code></p>`;
 
   root.className = `result ${label.tone}`;
   root.innerHTML = `
     <h1>${label.title}</h1>
     ${rows}
-    <p class="independent">Signature vérifiée dans votre navigateur, sans dépendre d'un serveur AIDD.
-    <a href="https://vc.1ed.tech" rel="noopener">Vérifier avec un outil tiers</a>.</p>`;
+    <p class="independent">Signature vérifiée dans votre navigateur, sans dépendre d'un serveur AIDD.</p>`;
 }
 
 /**
@@ -68,10 +68,11 @@ export function credentialUrl(pathname) {
 export async function mount(doc = document, fetchImpl = fetch) {
   const root = doc.getElementById('app');
   const base = memberBase(doc.location && doc.location.pathname);
+  const origin = (doc.location && doc.location.origin) || '';
   try {
     const jwt = await (await fetchImpl(`${base}/credential.jwt`)).text();
     const result = await verifyBadge(jwt.trim());
-    render(root, result, base);
+    render(root, result, base, origin);
   } catch {
     render(root, { state: STATE.INVALID, reason: 'Aucune preuve trouvée à cette adresse.' });
   }

@@ -64,23 +64,24 @@ describe('render', () => {
     assert.match(root.innerHTML, /vc\.1ed\.tech/);
   });
 
-  it('affiche le QR code et les téléchargements pour un badge authentifié', () => {
+  it('propose le téléchargement de la preuve et du QR, sans afficher le QR (pas de boucle)', () => {
     const root = fakeElement();
 
     render(root, { state: STATE.VALID, details: { handle: 'jd' } });
 
-    assert.match(root.innerHTML, /src="\.\/qr\.svg"/);
+    assert.doesNotMatch(root.innerHTML, /<img[^>]*qr\.svg/); // pas de QR affiché (il boucle)
     assert.match(root.innerHTML, /href="\.\/qr\.svg" download/);
     assert.match(root.innerHTML, /href="\.\/credential\.jwt" download/);
   });
 
-  it('utilise la base fournie pour QR et preuve (chemins absolus, URL sans slash)', () => {
+  it('expose l\'URL publique absolue de la preuve (pour un vérificateur tiers)', () => {
     const root = fakeElement();
 
-    render(root, { state: STATE.VALID, details: { handle: 'jd' } }, '/u/jd');
+    render(root, { state: STATE.VALID, details: { handle: 'jd' } }, '/u/jd', 'https://verify.ai-driven-dev.fr');
 
-    assert.match(root.innerHTML, /src="\/u\/jd\/qr\.svg"/);
     assert.match(root.innerHTML, /href="\/u\/jd\/credential\.jwt" download/);
+    assert.match(root.innerHTML, /<code>https:\/\/verify\.ai-driven-dev\.fr\/u\/jd\/credential\.jwt<\/code>/);
+    assert.match(root.innerHTML, /vc\.1ed\.tech/);
   });
 
   it('n\'affiche ni QR ni téléchargements pour un badge invalide', () => {
