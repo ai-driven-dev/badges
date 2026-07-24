@@ -23,7 +23,13 @@ const fmtDate = (iso) => {
  * téléchargement. Pur DOM, testable via une racine injectée.
  */
 export function render(root, result, base = '.', origin = '') {
-  const label = LABELS[result.state] || LABELS[STATE.INVALID];
+  // Fail-safe : signature valide MAIS révocation non vérifiée (status list injoignable
+  // ou non authentifiable) -> on n'affiche pas un « valide » plein. Ne jamais affirmer
+  // valide sans avoir pu écarter une révocation (un badge retiré passerait pour valide).
+  const label =
+    result.state === STATE.VALID && result.statusUnknown
+      ? { title: 'Signature valide · révocation non vérifiée', tone: 'warn' }
+      : LABELS[result.state] || LABELS[STATE.INVALID];
   const d = result.details || {};
   const proofUrl = `${origin}${base}/credential.jwt`;
   const rows = result.state === STATE.INVALID
