@@ -11,8 +11,8 @@ badges, les autres sont juste de la **présentation** remplaçable.
 > `DATA_BASE`/`SITE_BASE` sont définis dans `.github/scripts/lib/credential.mjs`.
 > En **prod**, la signature grave `DATA_BASE` (Pages) dans chaque credential — donc un
 > badge reste **vérifiable même si le VPS tombe**. Le VPS ne fait que lire Pages et l'habiller.
-> En **local**, `sign-samples.mjs` force tout sous `verify.ai-driven-dev.fr/data` (servi par Caddy)
-> pour tester en conditions prod-like sans DNS ; ce n'est PAS le schéma de prod.
+> En **local**, `npm run demo` (`.github/scripts/demo.mjs`) signe un badge de démo et le sert
+> pour tester sans DNS ; ce n'est PAS le schéma de prod.
 
 ## 1. Permanent — gravé dans chaque badge (immuable, à vie)
 
@@ -45,8 +45,7 @@ librement sans toucher aux badges. Les images sont rendues serveur (sharp).
 | `/u/<handle>` | Page de vérification publique (vérif crypto **dans le navigateur**). | — |
 | `/u/<handle>/kit` | Kit self-service du membre (assets à copier / télécharger). | — |
 | `/u/<handle>/badge.png` | Sceau **générique** (favicon, avatar). | `size` (16–1024), `role` (`certifie`\|`habilite`) |
-| `/u/<handle>/sceau.png` | Sceau **nominatif** : sceau + nom + fenêtre de validité (carré, partage/impression). | `size` (400–2000) |
-| `/u/<handle>/og.png` | Carte d'aperçu de lien (Open Graph, 1200×630) — déplie le lien collé en carte de marque. | — |
+| `/u/<handle>/og.png` | Carte d'aperçu de lien (Open Graph, 1200×630) — déplie le lien collé en carte de marque. Sert aussi de média certificat. | — |
 | `/u/<handle>/linkedin.png` | Photo du membre cerclée de l'anneau + pastille de vérification. | `size` (120–1200), `check` (`0` = sans pastille) |
 | `/u/<handle>/banner.png` | Coin « certifié » transparent à poser sur SA bannière. | — |
 | `/u/<handle>/qr.png` | QR code vers la page de preuve. | `size` |
