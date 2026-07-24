@@ -1,0 +1,49 @@
+# Accueil du nouveau certifié, au merge de sa PR d'inscription.
+# Aucun email n'est collecté (identité = compte GitHub) : la remise se fait par un
+# commentaire qui @mentionne le membre -> GitHub le notifie, avec le lien de son kit.
+name: Bienvenue au certifié
+
+on:
+  pull_request:
+    types: [closed]
+
+permissions:
+  pull-requests: write
+
+jobs:
+  welcome:
+    # Uniquement les PR d'inscription réellement mergées.
+    if: >-
+      github.event.pull_request.merged == true
+      && startsWith(github.event.pull_request.title, 'Inscription :')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Commenter le kit au nouveau certifié
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+          TITLE: ${{ github.event.pull_request.title }}
+          SITE: https://verify.ai-driven-dev.fr
+        run: |
+          set -euo pipefail
+          # Handle = le @login dans le titre « Inscription : Nom (@handle) ».
+          handle="$(printf '%s' "$TITLE" | grep -oE '@[A-Za-z0-9-]+' | head -1 | tr -d '@' || true)"
+          if [ -z "$handle" ]; then
+            echo "Handle introuvable dans le titre, on n'accueille pas."
+            exit 0
+          fi
+          body="$(cat <<EOF
+          🎉 @$handle, vous êtes certifié·e **AI-Driven Development** !
+
+          Votre kit, public et prêt à l'emploi : **$SITE/u/$handle/kit**
+
+          En 2 minutes :
+          1. **Ajoutez la certification à LinkedIn** — le bouton « Ajouter à LinkedIn » préremplit tout (dates comprises). Joignez l'« Image du certificat » en média : LinkedIn ne l'ajoute pas seul.
+          2. **Photo de profil** cerclée de l'anneau certifié.
+          3. **Signature email** à coller (Gmail / Outlook).
+
+          Votre page de preuve publique : $SITE/u/$handle
+          EOF
+          )"
+          gh pr comment "$PR" --body "$body"
