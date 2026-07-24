@@ -6,6 +6,7 @@
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { importPKCS8, SignJWT } from 'jose';
 import { buildStatusListCredential } from './lib/status-list.mjs';
+import { keyUrl } from './lib/credential.mjs';
 import { LEDGER_PATH, parseLedger } from './lib/revocation.mjs';
 
 function fail(m) { console.error(m); process.exit(2); }
@@ -32,8 +33,11 @@ async function main() {
   const revoked = collectRevokedIndices();
   const credential = await buildStatusListCredential(revoked, { issuedOn });
 
+  // kid = MÊME helper/base que l'émission du credential (DATA_BASE, la clé y est publiée).
+  // Diverger ici casse la vérif de révocation : le vérifieur ne trouverait pas la clé du
+  // status list -> contrôle non concluant -> un badge révoqué passerait pour valide.
   const jwt = await new SignJWT(credential)
-    .setProtectedHeader({ alg: 'RS256', typ: 'JWT', kid: `https://verify.ai-driven-dev.fr/keys/${kid}.json` })
+    .setProtectedHeader({ alg: 'RS256', typ: 'JWT', kid: keyUrl(kid) })
     .setIssuer(credential.issuer.id)
     .setIssuedAt(Math.floor(issuedOn.getTime() / 1000))
     .sign(privateKey);
