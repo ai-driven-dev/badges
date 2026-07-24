@@ -43,9 +43,11 @@ npm run demo  # signe un badge de démo et le sert -> http://localhost:8000/u/de
 
 | Chemin | Contenu |
 |---|---|
-| `docs/ARCHITECTURE.md` | L'architecture et les flux (diagrammes) |
+| `docs/ARCHITECTURE.md` | Architecture, flux et **diagrammes** (deux hôtes, émission, vérif, retrait, cycle de vie de la clé) |
+| `docs/urls.md` | Cartographie des URLs (permanent gravé vs présentation) |
+| `docs/verification.md` | Vérifier un badge indépendamment (page, 1EdTech, hors ligne) |
 | `MAINTAINERS.md` | Guide des mainteneurs, étape par étape |
-| `docs/PRD.md` | Spécification + contraintes techniques (CT-1…CT-14) |
+| `docs/PRD.md` | Référence : exigences + contraintes (CT-1…CT-14), rationale |
 | `docs/rgpd/` | Information (art. 13) + justification non-AIPD |
 | `.github/scripts/` | Intake, émission, révocation, annuaire (+ tests) |
 | `site/` | Code de vérification navigateur (+ tests) |
