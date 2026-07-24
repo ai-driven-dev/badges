@@ -10,6 +10,7 @@ Ce que fait un mainteneur, étape par étape. Rien d'autre n'est requis au quoti
 4. **Merger** la PR. → le badge est émis et publié automatiquement. Fin.
 
 > Rien n'est public tant que la PR n'est pas mergée. Le merge **est** l'autorisation.
+> Au merge, le membre est **accueilli en commentaire** sur sa PR (GitHub le notifie), avec le lien de son kit — aucun email requis.
 
 ## Traiter un retrait (RGPD)
 
