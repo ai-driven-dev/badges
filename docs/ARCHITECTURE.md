@@ -52,12 +52,17 @@ flowchart TD
   B --> C["récupère la clé via le kid (Pages)"]
   C --> D{"Signature valide ?"}
   D -->|non| INV["Invalide"]
-  D -->|oui| E{"Révoqué ? (status list)"}
+  D -->|oui| S{"Statut vérifiable ?<br/>(status list joignable + signée)"}
+  S -->|non| UNK["Signature valide,<br/>révocation non vérifiée (prudence)"]
+  S -->|oui| E{"Révoqué ?"}
   E -->|oui| REV["Révoqué"]
   E -->|non| F{"Expiré ?"}
   F -->|oui| EXP["Expiré"]
   F -->|non| OK["Valide"]
 ```
+
+> Fail-safe : on n'affirme jamais « valide » sans avoir écarté une révocation. Si le
+> status list est injoignable ou non authentifiable, l'état est **prudent**, pas valide.
 
 ## Retrait RGPD
 
@@ -80,9 +85,28 @@ sequenceDiagram
 RGPD = `rm -rf data/members/<handle>/`. La révocation survit dans `data/revoked.json`
 (juste des entiers, non personnels). Schéma des champs : `PRD.md`.
 
-## Clé de signature
+## Clé de signature — cycle de vie
 
-Une paire RS256. La **privée** vit en secret d'environnement CI (`signing`), utilisée
-seulement au merge ; jamais dans le dépôt. La **publique** est publiée à vie
-(`keys/<kid>.json`) : retirer une ancienne clé rendrait ses badges invérifiables.
-Rotation : un workflow manuel gaté par une review Habilité (`key-ceremony`).
+Une paire RS256. Le `kid` = thumbprint RFC 7638 de la clé publique, donc il ne peut
+jamais diverger de la clé (l'émission le re-dérive à chaque build).
+
+```mermaid
+flowchart LR
+  Gen["Cérémonie de clé<br/>(workflow manuel, gate Habilité)"]
+  Gen -->|"privée (PKCS8)"| Priv["secret env 'signing'<br/>(jamais dans le dépôt)"]
+  Gen -->|"publique (JWK nu)"| Pub["keys/&lt;kid&gt;.json<br/>publiée par PR"]
+  Priv -->|"au merge, en CI"| Sign["signe credentials + status list<br/>kid = URL Pages de la clé"]
+  Pub -->|"à vie — CT-7"| Verif["déréférencée par le kid des badges"]
+  Gen -. "rotation = re-run" .-> New["nouvelle kid<br/>l'ancienne publique RESTE publiée"]
+```
+
+- **Génération** : workflow manuel `key-ceremony`, gaté par une review *Habilité*. La
+  privée part en secret `SIGNING_PRIVATE_KEY` (env `signing`) ; la publique est publiée
+  par une PR de clé. L'émission ne se fait qu'après le merge de cette PR.
+- **Rotation** : re-jouer la cérémonie. Une nouvelle `kid` sert les émissions suivantes.
+- **Révoquer une clé — nuance** : on ne supprime **jamais** `keys/<kid>.json`. Retirer
+  une clé publique rendrait invérifiables **tous** les badges signés avec (CT-7). Donc :
+  - « retirer » une clé = **rotation** (arrêter de signer avec l'ancienne) ;
+  - **compromission** = rotation **et** révocation, via la status list, de **tous** les
+    badges signés par la clé compromise (un attaquant pourrait forger avec elle), puis
+    ré-émission des membres légitimes sous la nouvelle clé.

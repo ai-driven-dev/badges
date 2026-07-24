@@ -1,5 +1,11 @@
 # SP1 — Domaine + hébergement
 
+> **⚠️ Superseded — spike historique.** Décrit l'ancien schéma **mono-host**
+> (`verify.ai-driven-dev.fr` = Pages). Le système a depuis **splitté en deux hôtes** :
+> ancre permanente sur `ai-driven-dev.github.io/badges` (Pages), présentation sur
+> `verify.ai-driven-dev.fr` (VPS). **Source à jour : [ARCHITECTURE.md](../../ARCHITECTURE.md)
+> + [urls.md](../../urls.md).** Conservé pour la traçabilité, pas comme référence.
+
 **Statut : tranché.** Décision écrite ci-dessous. Débloque E1 (socle/infra) et E4 (vérification).
 
 ## Décision
