@@ -1,0 +1,200 @@
+# Intake : une issue de mise à jour -> PR qui régénère la fiche du membre (nom,
+# LinkedIn, site, description, photo). Le badge signé n'encode que le handle + les
+# dates + le statut : une mise à jour ne re-signe rien, elle rafraîchit l'annuaire.
+# status_index, role et la date de certification sont préservés (fiche éditée, pas
+# ré-ajoutée). Le job agit sous l'App bot intake, pas GITHUB_TOKEN (checks non bloqués).
+name: PR de mise à jour des informations
+
+on:
+  issues:
+    types: [opened, labeled]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: update-pr-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
+jobs:
+  create-pr:
+    # Le label `update-request` est posé côté serveur par l'Issue Form. Retirer le
+    # label arrête ce workflow. `update-retry` (triage-only) rejoue un échec.
+    if: >-
+      github.event.issue.state == 'open'
+      && contains(github.event.issue.labels.*.name, 'update-request')
+      && (github.event.action != 'labeled' || github.event.label.name == 'update-retry')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/create-github-app-token@d72941d797fd3113feb6b93fd0dec494b13a2547 # v1
+        id: app-token
+        with:
+          app-id: ${{ secrets.INTAKE_BOT_APP_ID }}
+          private-key: ${{ secrets.INTAKE_BOT_APP_PRIVATE_KEY }}
+
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: "20"
+
+      - name: Lire la demande de mise à jour
+        id: request
+        continue-on-error: true
+        env:
+          GITHUB_EVENT_PATH: ${{ github.event_path }}
+        run: node .github/scripts/read-update-request.mjs
+
+      - name: Signaler une demande invalide
+        if: steps.request.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          gh issue comment "$ISSUE_NUMBER" --body "Votre mise à jour n'a pas pu être traitée. Vérifiez les champs remplis (LinkedIn/Site doivent être des URLs https) et ouvrez une nouvelle demande : modifier cette issue ne relance pas le traitement, qui ne réagit qu'aux issues nouvellement ouvertes."
+          gh issue edit "$ISSUE_NUMBER" --add-label "update-needs-fix" || true
+          gh issue close "$ISSUE_NUMBER" --reason "not planned"
+          exit 1
+
+      - name: Arrêter si aucune fiche à mettre à jour
+        if: steps.request.outcome == 'success' && steps.request.outputs.has_record == 'false'
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          HANDLE: ${{ github.event.issue.user.login }}
+        run: |
+          gh issue comment "$ISSUE_NUMBER" --body "@$HANDLE n'a pas de fiche dans le registre — inscrivez-vous d'abord (formulaire « S'inscrire au registre des certifiés »)."
+          gh issue close "$ISSUE_NUMBER" --reason "not planned"
+
+      - name: Arrêter si rien n'a changé
+        if: steps.request.outcome == 'success' && steps.request.outputs.has_record == 'true' && steps.request.outputs.changed == 'false'
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          gh issue comment "$ISSUE_NUMBER" --body "Aucune modification détectée : tous les champs étaient vides. Ouvrez une nouvelle demande en remplissant ce que vous voulez changer."
+          gh issue close "$ISSUE_NUMBER" --reason "not planned"
+
+      - name: Arrêter si une PR de mise à jour existe déjà
+        id: existing-pr
+        if: steps.request.outcome == 'success' && steps.request.outputs.has_record == 'true' && steps.request.outputs.changed == 'true'
+        env:
+          BRANCH_PREFIX: maj/${{ steps.request.outputs.github }}-
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          GITHUB_HANDLE: ${{ steps.request.outputs.github }}
+          ISSUE_NUMBER: ${{ steps.request.outputs.issue_number }}
+        run: |
+          pr_url="$(gh pr list --state open --json url,headRefName \
+            --jq '[.[] | select(.headRefName | startswith(env.BRANCH_PREFIX))] | .[0].url // ""')"
+          echo "url=$pr_url" >> "$GITHUB_OUTPUT"
+          if [ -n "$pr_url" ]; then
+            gh issue comment "$ISSUE_NUMBER" --body "Une PR de mise à jour est déjà ouverte pour @$GITHUB_HANDLE : $pr_url"
+            gh issue close "$ISSUE_NUMBER" --reason "not planned"
+          fi
+
+      - name: Écrire la fiche mise à jour
+        if: steps.existing-pr.conclusion == 'success' && steps.existing-pr.outputs.url == ''
+        env:
+          MEMBER_PATH: ${{ steps.request.outputs.path }}
+          RECORD: ${{ steps.request.outputs.record }}
+        run: printf '%s' "$RECORD" > "$MEMBER_PATH"
+
+      - name: Installer les dépendances des scripts
+        if: steps.existing-pr.conclusion == 'success' && steps.existing-pr.outputs.url == '' && steps.request.outputs.photo_changed == 'true'
+        run: cd .github/scripts && npm ci
+
+      - name: Traiter la nouvelle photo (WebP + strip EXIF + LFS)
+        if: steps.existing-pr.conclusion == 'success' && steps.existing-pr.outputs.url == '' && steps.request.outputs.photo_changed == 'true'
+        env:
+          PHOTO_URL: ${{ steps.request.outputs.photo_url }}
+          PHOTO_PATH: ${{ steps.request.outputs.photo_path }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: node .github/scripts/process-photo.mjs
+
+      - name: Committer et ouvrir la PR
+        id: pull-request
+        if: steps.existing-pr.conclusion == 'success' && steps.existing-pr.outputs.url == ''
+        env:
+          BRANCH: ${{ steps.request.outputs.branch }}
+          DISPLAY_NAME: ${{ steps.request.outputs.name }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          GITHUB_HANDLE: ${{ steps.request.outputs.github }}
+          MEMBER_PATH: ${{ steps.request.outputs.path }}
+          PHOTO_PATH: ${{ steps.request.outputs.photo_path }}
+          PHOTO_CHANGED: ${{ steps.request.outputs.photo_changed }}
+        run: |
+          git config user.name "aidd-badges-intake-bot"
+          git config user.email "actions@github.com"
+          git switch -c "$BRANCH"
+          git add "$MEMBER_PATH"
+          if [ "$PHOTO_CHANGED" = "true" ]; then git add "$PHOTO_PATH"; fi   # photo en pointeur LFS (#16)
+          git commit -m "Mise à jour du registre : $GITHUB_HANDLE"
+          git push -u origin "$BRANCH"
+          pr_url="$(gh pr create \
+            --title "Mise à jour : $DISPLAY_NAME (@$GITHUB_HANDLE)" \
+            --body "PR de mise à jour générée depuis le formulaire pour @$GITHUB_HANDLE. La date de certification, le status_index et le badge signé sont inchangés : seule la fiche d'annuaire est rafraîchie. Relire puis merger si accepté." \
+            --head "$BRANCH" --base main)"
+          echo "url=$pr_url" >> "$GITHUB_OUTPUT"
+
+      - name: Commentaire de modération (avant -> après)
+        if: steps.pull-request.outputs.url != ''
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          PR_URL: ${{ steps.pull-request.outputs.url }}
+          BRANCH: ${{ steps.request.outputs.branch }}
+          GITHUB_HANDLE: ${{ steps.request.outputs.github }}
+          PHOTO_CHANGED: ${{ steps.request.outputs.photo_changed }}
+          PHOTO_PATH: ${{ steps.request.outputs.photo_path }}
+          B_NAME: ${{ steps.request.outputs.before_name }}
+          B_LINKEDIN: ${{ steps.request.outputs.before_linkedin }}
+          B_WEBSITE: ${{ steps.request.outputs.before_website }}
+          B_DESCRIPTION: ${{ steps.request.outputs.before_description }}
+          A_NAME: ${{ steps.request.outputs.name }}
+          A_LINKEDIN: ${{ steps.request.outputs.linkedin }}
+          A_WEBSITE: ${{ steps.request.outputs.website }}
+          A_DESCRIPTION: ${{ steps.request.outputs.description }}
+        run: |
+          row() { # champ | avant | après ; marque -> si différent
+            local label="$1" before="$2" after="$3"
+            local mark=""; [ "$before" != "$after" ] && mark=" ⟵ modifié"
+            echo "| ${label} | ${before:-—} | **${after:-—}**${mark} |"
+          }
+          {
+            echo "## À modérer avant publication"
+            echo ""
+            echo "Mise à jour de la fiche de @${GITHUB_HANDLE}. Badge et date de certification inchangés."
+            echo ""
+            echo "| Champ | Avant | Après |"
+            echo "|---|---|---|"
+            row "Nom" "$B_NAME" "$A_NAME"
+            row "LinkedIn" "$B_LINKEDIN" "$A_LINKEDIN"
+            row "Site" "$B_WEBSITE" "$A_WEBSITE"
+            row "Description" "$B_DESCRIPTION" "$A_DESCRIPTION"
+            echo ""
+            if [ "$PHOTO_CHANGED" = "true" ]; then
+              photo_media="https://media.githubusercontent.com/media/${GITHUB_REPOSITORY}/${BRANCH}/${PHOTO_PATH}"
+              echo "Nouvelle photo (normalisée WebP, EXIF retiré) :"
+              echo ""
+              echo "![Nouvelle photo de @${GITHUB_HANDLE}](${photo_media})"
+            else
+              echo "_Photo inchangée._"
+            fi
+            echo ""
+            echo "### Checklist"
+            echo "- [ ] Modifications cohérentes et sûres (pas de rename/photo abusifs)"
+            echo "- [ ] Liens valides"
+          } > /tmp/moderation.md
+          gh pr comment "$PR_URL" --body-file /tmp/moderation.md
+
+      - name: Fermer l'issue de mise à jour
+        if: steps.pull-request.outputs.url != ''
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          ISSUE_NUMBER: ${{ steps.request.outputs.issue_number }}
+          PR_URL: ${{ steps.pull-request.outputs.url }}
+        run: |
+          gh issue comment "$ISSUE_NUMBER" --body "PR de mise à jour créée : $PR_URL"
+          gh issue edit "$ISSUE_NUMBER" --add-label "update-pr-created" || true
+          gh issue close "$ISSUE_NUMBER" --reason completed

@@ -5,12 +5,12 @@ import { clean, parseIssueFormBody } from './issue-form.mjs';
 import { extractImageUrl } from './photo-url.mjs';
 import { recordPathFor, photoPathFor } from './member-paths.mjs';
 
-const NO_RESPONSE = '_No response_';
+export const NO_RESPONSE = '_No response_';
 
-const LIMIT = Object.freeze({ name: 120, linkedin: 200, website: 200, description: 280 });
+export const LIMIT = Object.freeze({ name: 120, linkedin: 200, website: 200, description: 280 });
 
 // Le heading d'un champ Issue Form = son `label`, rendu en `### <label>`.
-const HEADING = Object.freeze({
+export const HEADING = Object.freeze({
   name: 'nom complet',
   linkedin: 'profil linkedin',
   website: 'site web',
@@ -23,24 +23,24 @@ const GITHUB_HANDLE_RE = /^[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,37}[a-zA-Z0-9])?$/;
 /** Erreur de validation d'une demande : message destiné au demandeur. */
 export class RequestError extends Error {}
 
-const omitNoResponse = (value) => (value === NO_RESPONSE ? '' : value);
+export const omitNoResponse = (value) => (value === NO_RESPONSE ? '' : value);
 
-function requireSingleLine(value, field) {
+export function requireSingleLine(value, field) {
   if (value.includes('\n')) throw new RequestError(`${field} doit tenir sur une ligne`);
   return value;
 }
 
-function requireUnderLimit(value, field, max) {
+export function requireUnderLimit(value, field, max) {
   if (value.length > max) throw new RequestError(`${field} dépasse ${max} caractères`);
   return value;
 }
 
-function isHttpsUrl(value) {
+export function isHttpsUrl(value) {
   try { return new URL(value).protocol === 'https:'; } catch { return false; }
 }
 
 /** Scalaire YAML sûr : double-quote via JSON (échappe guillemets, backslash, etc.). */
-const yamlScalar = (value) => JSON.stringify(String(value));
+export const yamlScalar = (value) => JSON.stringify(String(value));
 
 /** Valide le handle GitHub (issu de l'auteur de l'issue, pas d'un champ saisi). */
 export function parseHandle(login) {
@@ -90,12 +90,16 @@ export function parseDescription(fields) {
   return requireUnderLimit(value, 'Description', LIMIT.description);
 }
 
-/** Sérialise l'enregistrement du membre en YAML plat, valeurs échappées. */
-export function toMemberYaml({ handle, name, linkedin, website, description, statusIndex }) {
+/**
+ * Sérialise l'enregistrement du membre en YAML plat, valeurs échappées.
+ * `role` et `renewedOn` sont conservés tels quels (indispensable pour une
+ * mise à jour, qui régénère la fiche sans devoir en perdre un champ).
+ */
+export function toMemberYaml({ handle, name, linkedin, website, description, statusIndex, role = 'certifie', renewedOn }) {
   if (!Number.isInteger(statusIndex) || statusIndex < 0) throw new RequestError('statusIndex requis');
   const lines = [
     `github: ${yamlScalar(handle)}`,
-    `role: "certifie"`,
+    `role: ${yamlScalar(role)}`,
     `name: ${yamlScalar(name)}`,
     `linkedin: ${yamlScalar(linkedin)}`,
     `photo: ${yamlScalar(photoPathFor(handle))}`, // objet Git LFS (#16), normalisé à l'intake (#21)
@@ -103,6 +107,7 @@ export function toMemberYaml({ handle, name, linkedin, website, description, sta
   ];
   if (website) lines.push(`website: ${yamlScalar(website)}`);
   if (description) lines.push(`description: ${yamlScalar(description)}`);
+  if (renewedOn) lines.push(`renewed_on: ${yamlScalar(renewedOn)}`); // #27 : prime sur certified_on
   return lines.join('\n') + '\n';
 }
 

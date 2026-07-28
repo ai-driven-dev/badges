@@ -1,0 +1,59 @@
+name: Mettre à jour mes informations
+description: Modifier votre nom, photo, profil LinkedIn, site ou description dans l'annuaire des certifiés.
+title: "[Certifié] Mise à jour de mes informations"
+labels: ["update-request"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Modifiez uniquement ce que vous voulez changer. **Un champ laissé vide reste inchangé.**
+
+        Votre identité est le compte GitHub avec lequel vous ouvrez cette demande ; elle n'est pas modifiable ici. Votre badge et sa date de certification ne changent pas : seule votre fiche d'annuaire est mise à jour. Un mainteneur relit la modification avant publication.
+  - type: input
+    id: name
+    attributes:
+      label: Nom complet
+      description: Laissez vide pour garder le nom actuel.
+      placeholder: Prénom Nom
+    validations:
+      required: false
+  - type: input
+    id: linkedin
+    attributes:
+      label: Profil LinkedIn
+      description: L'adresse complète de votre profil LinkedIn. Laissez vide pour garder l'actuel.
+      placeholder: https://www.linkedin.com/in/votre-profil
+    validations:
+      required: false
+  - type: input
+    id: website
+    attributes:
+      label: Site web
+      description: Votre site personnel. Laissez vide pour garder l'actuel.
+      placeholder: https://votre-site.fr
+    validations:
+      required: false
+  - type: input
+    id: description
+    attributes:
+      label: Description
+      description: Une phrase de présentation. Laissez vide pour garder l'actuelle.
+      placeholder: "Développeur passionné d'IA appliquée au dev."
+    validations:
+      required: false
+  - type: textarea
+    id: photo
+    attributes:
+      label: Photo
+      description: Glissez une nouvelle photo pour remplacer l'actuelle. Laissez vide pour la garder.
+    validations:
+      required: false
+  - type: checkboxes
+    id: consent
+    attributes:
+      label: Exactitude et publication
+      options:
+        - label: Je contrôle ce compte GitHub et les informations que je fournis sont exactes.
+          required: true
+        - label: J'accepte que ces informations mises à jour soient publiées dans l'annuaire public.
+          required: true

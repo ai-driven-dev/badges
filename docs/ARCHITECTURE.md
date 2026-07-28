@@ -79,6 +79,31 @@ sequenceDiagram
   CI->>Pages: status list révoque, annuaire retire, photo supprimée
 ```
 
+## Mise à jour des informations
+
+Le badge signé n'encode que le handle, les dates et le statut — nom, LinkedIn, photo et
+description vivent dans l'annuaire seul. Une mise à jour **ne re-signe donc rien** : elle
+régénère la fiche (mêmes `github`, `role`, `status_index`) et l'émission reproduit un
+credential byte-identique. La date de certification (`certified_on` = commit d'**ajout**
+de la fiche) et le lien de preuve restent stables. Un champ laissé vide = inchangé.
+
+```mermaid
+sequenceDiagram
+  participant M as Membre
+  participant B as Bot
+  participant R as Mainteneur
+  participant CI as CI
+  M->>B: Issue Form (mise à jour)
+  B->>B: régénère record.yml (status_index/role/date préservés)
+  B->>R: PR de mise à jour (diff avant → après)
+  R->>CI: merge
+  CI->>Pages: annuaire rafraîchi, credential réémis identique
+```
+
+> Instantanéité : le texte de l'annuaire (`directory.json`) est lu en `no-store` → visible
+> aussitôt. Une **photo** remplacée garde la même URL Pages : cache CDN (~10 min) + cache
+> navigateur peuvent servir l'ancienne un moment.
+
 ## Données d'un membre
 
 `data/members/<handle>/record.yml` (fiche) + `photo.webp` (objet Git LFS). L'effacement
