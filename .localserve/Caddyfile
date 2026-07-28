@@ -1,0 +1,21 @@
+# Reverse-proxy HTTPS local pour reproduire la prod sans DNS.
+# verify.ai-driven-dev.fr (TLS interne de confiance Caddy) :
+#   - /data/*  -> serveur de données local (:8200)  (clés, statut, preuves, annuaire, photos)
+#   - le reste -> le site Astro (:4321)              (page /u/<handle>, /communaute)
+# Prérequis : "127.0.0.1 verify.ai-driven-dev.fr" dans /etc/hosts.
+# Lancement : sudo caddy run --config .localserve/Caddyfile
+
+{
+	local_certs
+}
+
+verify.ai-driven-dev.fr {
+	handle_path /data/* {
+		reverse_proxy 127.0.0.1:8200 {
+			header_up Host 127.0.0.1:8200
+		}
+	}
+	reverse_proxy 127.0.0.1:4321 {
+		header_up Host 127.0.0.1:4321
+	}
+}
