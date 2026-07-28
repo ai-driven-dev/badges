@@ -1,0 +1,41 @@
+{
+  "generatedAt": "2026-07-22T10:00:00Z",
+  "count": 4,
+  "members": [
+    {
+      "handle": "alexmartin",
+      "name": "Alexandre Martin",
+      "role": "certifie",
+      "linkedin": "https://linkedin.com/in/alexmartin",
+      "description": "Lead dev, orchestration d'agents en prod.",
+      "photo": "https://verify.ai-driven-dev.fr/data/photos/alexmartin.webp",
+      "verify": "https://verify.ai-driven-dev.fr/u/alexmartin"
+    },
+    {
+      "handle": "crousseau",
+      "name": "Camille Rousseau",
+      "role": "certifie",
+      "linkedin": "https://linkedin.com/in/crousseau",
+      "description": "Freelance, TDD assisté par IA.",
+      "photo": "https://verify.ai-driven-dev.fr/data/photos/crousseau.webp",
+      "verify": "https://verify.ai-driven-dev.fr/u/crousseau"
+    },
+    {
+      "handle": "ybenali",
+      "name": "Yassine Benali",
+      "role": "certifie",
+      "linkedin": "https://linkedin.com/in/ybenali",
+      "description": "CTO, industrialisation du code généré.",
+      "photo": "https://verify.ai-driven-dev.fr/data/photos/ybenali.webp",
+      "verify": "https://verify.ai-driven-dev.fr/u/ybenali"
+    },
+    {
+      "handle": "sophiedurand",
+      "name": "Sophie Durand",
+      "role": "certifie",
+      "description": "Ingénieure plateforme, delivery assisté par IA.",
+      "photo": "https://verify.ai-driven-dev.fr/data/photos/crousseau.webp",
+      "verify": "https://verify.ai-driven-dev.fr/u/sophiedurand"
+    }
+  ]
+}

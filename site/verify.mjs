@@ -100,7 +100,7 @@ export async function verifyBadge(jwt, { fetchKey, fetchStatus, now = new Date()
   catch { return { state: STATE.INVALID, reason: 'preuve illisible' }; }
 
   const kidUrl = decoded.header.kid;
-  const getKey = fetchKey || (async (url) => (await fetch(url)).json());
+  const getKey = fetchKey || (async (url) => (await fetch(url, { cache: 'no-store' })).json());
 
   let jwk;
   try { jwk = await getKey(kidUrl); }
@@ -110,7 +110,7 @@ export async function verifyBadge(jwt, { fetchKey, fetchStatus, now = new Date()
   if (!signatureOk) return { state: STATE.INVALID, reason: 'signature invalide' };
 
   const details = { ...readDetails(decoded.payload), kidUrl };
-  const getJwt = fetchStatus || (async (url) => (await fetch(url)).text());
+  const getJwt = fetchStatus || (async (url) => (await fetch(url, { cache: 'no-store' })).text());
   const revocation = await checkRevocation(decoded.payload.credentialStatus, { getJwt, getKey });
   if (revocation.revoked) return { state: STATE.REVOKED, details, header: decoded.header, payload: decoded.payload };
 
