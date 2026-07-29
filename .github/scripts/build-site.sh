@@ -9,6 +9,9 @@
 set -euo pipefail
 shopt -s nullglob
 
+echo "== Validation des index de statut (fail-fast) =="
+node .github/scripts/validate-members.mjs
+
 echo "== Émission des credentials (déterministe) =="
 count=0
 for d in data/members/*/; do
