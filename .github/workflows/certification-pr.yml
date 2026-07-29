@@ -42,14 +42,21 @@ jobs:
       - name: Calculer l'index de statut suivant
         id: idx
         run: |
-          # Index permanent dans la Bitstring Status List : max existant + 1.
-          # (Volume faible, PR relues en série ; une collision improbable serait vue au merge.)
+          # Index permanent dans la Bitstring Status List : max(records actifs, index
+          # révoqués) + 1. Inclure revoked.json est ESSENTIEL : un index révoqué est
+          # brûlé à vie ; sans ça, retirer tous les membres actifs ferait retomber le
+          # compteur sur un index déjà révoqué -> un nouveau badge naîtrait « révoqué ».
           max=-1
           shopt -s nullglob
           for f in data/members/*/record.yml; do
             i="$(grep -oE '^status_index:[[:space:]]*[0-9]+' "$f" | grep -oE '[0-9]+' || true)"
             if [ -n "$i" ] && [ "$i" -gt "$max" ]; then max="$i"; fi
           done
+          if [ -f data/revoked.json ]; then
+            while read -r i; do
+              if [ -n "$i" ] && [ "$i" -gt "$max" ]; then max="$i"; fi
+            done < <(grep -oE '[0-9]+' data/revoked.json)
+          fi
           echo "next=$((max+1))" >> "$GITHUB_OUTPUT"
 
       - name: Lire la demande d'inscription
