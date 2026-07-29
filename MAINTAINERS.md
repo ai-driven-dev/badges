@@ -12,6 +12,14 @@ Ce que fait un mainteneur, étape par étape. Rien d'autre n'est requis au quoti
 > Rien n'est public tant que la PR n'est pas mergée. Le merge **est** l'autorisation.
 > Au merge, le membre est **accueilli en commentaire** sur sa PR (GitHub le notifie), avec le lien de son kit — aucun email requis.
 
+## Traiter une mise à jour
+
+1. Une PR **« Mise à jour : … »** s'ouvre (le membre a rempli le formulaire de mise à jour).
+2. Lire le **commentaire de modération** : il montre le diff **avant → après** et la nouvelle photo le cas échéant. Vérifier qu'il n'y a pas de rename/photo abusif.
+3. **Merger** la PR. → l'annuaire est rafraîchi. Le badge signé, son `status_index` et sa date de certification ne changent pas.
+
+> Une photo remplacée garde la même URL : le cache CDN/navigateur (~10 min) peut servir l'ancienne un moment ; le texte, lui, est immédiat.
+
 ## Traiter un retrait (RGPD)
 
 1. Une PR **« Retrait RGPD : @… »** s'ouvre (le membre a demandé le retrait).
