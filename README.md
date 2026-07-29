@@ -26,7 +26,8 @@ affichable sur LinkedIn et ailleurs.
 2. **Générer** — un bot en fait une pull request (fiche + photo normalisée + aperçu de modération).
 3. **Émettre** — un mainteneur **merge** : c'est le point d'autorité. Le badge est signé et publié.
 4. **Vérifier** — la page du badge contrôle la signature **dans le navigateur** (QR, preuve téléchargeable).
-5. **Retirer** — une demande de retrait supprime la fiche + la photo et révoque le badge (RGPD).
+5. **Mettre à jour** — un formulaire modifie nom, photo, LinkedIn, site ou description ; l'annuaire seul change, le badge signé reste identique.
+6. **Retirer** — une demande de retrait supprime la fiche + la photo et révoque le badge (RGPD).
 
 Détail des flux : **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)**.
 Guide des mainteneurs : **[MAINTAINERS.md](MAINTAINERS.md)**.

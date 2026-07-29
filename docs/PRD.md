@@ -50,6 +50,7 @@ Le besoin : qu'un tiers puisse **confirmer lui-même** qu'un badge est authentiq
 - En tant que **membre certifié**, je veux recevoir mon badge et une preuve téléchargeable, afin de pouvoir la présenter à qui je veux.
 - En tant que **membre certifié**, je veux ajouter mon badge à mon profil LinkedIn sans me tromper de champ, afin que les recruteurs qui me consultent puissent le vérifier.
 - En tant que **membre de longue date**, je veux pouvoir repasser la certification librement, afin de renouveler mon badge quand il expire.
+- En tant que **membre certifié**, je veux mettre à jour mes informations (nom, photo, LinkedIn, site, description) via un formulaire, sans que cela ré-émette ni invalide mon badge.
 - En tant que **visiteur**, je veux parcourir l'annuaire public des certifiés, afin de voir qui est membre.
 - En tant qu'**employeur**, je veux vérifier un badge en un clic, afin de savoir immédiatement s'il est valide.
 - En tant qu'**employeur méfiant**, je veux vérifier un badge avec un outil que je choisis moi-même, afin de ne pas avoir à faire confiance à AIDD.
@@ -201,6 +202,8 @@ ajouté le record (1re certification). Un renouvellement fixe `renewed_on` dans 
 record : l'émission repart de cette date (nouvelle fenêtre de 1 an). Une preuve
 déjà exportée garde son ancienne échéance et reste valide jusque-là.
 
+**Mise à jour des informations.** Un membre peut modifier nom, photo, LinkedIn, site ou description via un formulaire (champ vide = inchangé). Le badge signé n'encode que le handle, les dates et le statut : ces champs vivent dans l'annuaire seul, donc une mise à jour **ne re-signe rien**. La fiche est régénérée avec les mêmes `github`, `role` et `status_index` ; l'émission reproduit un credential **byte-identique** et `certified_on` (commit d'ajout) reste stable. La modération affiche un diff avant → après.
+
 **Retrait RGPD (#36).** Un retrait **supprime tout le dossier** `data/members/<handle>/` (fiche + photo LFS) — l'effacement, pas une réécriture d'historique. Pour que le badge reste révoqué à vie malgré la disparition de la fiche, son `status_index` est inscrit dans un **registre de révocation** `data/revoked.json` (une liste d'entiers — pas de donnée personnelle). La liste de statuts (CT-4) se construit à partir de ce registre. Une preuve déjà exportée reste présentable mais apparaît **révoquée** à la vérification (CT-5, seule voie).
 
 Le site public `ai-driven-dev.fr` (`/communaute`) affiche l'annuaire ; il consomme le flux **`directory.json`** publié par la CI sur l'ancre Pages `ai-driven-dev.github.io/badges` (nom, LinkedIn, photo, site, description, URL de vérif). Les photos sont servies sur `ai-driven-dev.github.io/badges/photos/<handle>.webp`. Les membres révoqués sont exclus du flux. (Hôtes : cf. `ARCHITECTURE.md`.)
@@ -244,6 +247,8 @@ Le validateur public [`1EdTech/digital-credentials-public-validator`](https://gi
 | Surface | Rôle | Accès |
 |---|---|---|
 | Formulaire / Issue Form | Demande de certification | Public (membre) |
+| Formulaire / Issue Form | Mise à jour des informations (annuaire seul, pas de ré-émission) | Public (membre) |
+| Formulaire / Issue Form | Demande de retrait RGPD | Public (membre) |
 | Bot + workflow PR | Écrit l'enregistrement, ouvre la PR | GitHub App |
 | Merge (mainteneur) | Point d'autorité → déclenche l'émission | Équipe AIDD |
 | Job de signature (CI) | Génère le VC-JWT signé au merge | Secret CI |
