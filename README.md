@@ -84,9 +84,3 @@ npm run demo  # signe un badge de démo et le sert -> http://localhost:8000/u/de
 | `.github/scripts/` | Intake, émission, révocation, annuaire (+ tests) |
 | `site/` | Code de vérification navigateur (+ tests) |
 | `data/members/<handle>/` | Fiche + photo d'un membre (photo en Git LFS) |
-
-## Garde-fous (non négociables)
-
-1. **La clé privée de signature ne va jamais dans le dépôt** — secret CI. Sa fuite = badges forgés.
-2. **Aucune donnée personnelle effaçable dans l'historique Git** — photos en LFS, retrait = suppression d'objet.
-3. **Le dépôt reste public** — les verrous de confiance l'exigent au plan gratuit (CT-14).
