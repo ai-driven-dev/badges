@@ -16,6 +16,37 @@
 
 ---
 
+## Membres certifiés
+
+<table>
+<tr>
+<td align="center" width="140">
+<a href="https://verify.ai-driven-dev.fr/u/doheto"><img src="data/members/doheto/photo.webp" width="72" height="72" style="border-radius:50%"/></a><br/>
+<b>Gildas Avocegamou</b><br/>
+<sub><a href="https://verify.ai-driven-dev.fr/u/doheto">Badge</a> · <a href="https://www.linkedin.com/in/gildas-avocegamou">LinkedIn</a></sub>
+</td>
+<td align="center" width="140">
+<a href="https://verify.ai-driven-dev.fr/u/jdm-web"><img src="data/members/jdm-web/photo.webp" width="72" height="72" style="border-radius:50%"/></a><br/>
+<b>Jeremy Desvaux de Marigny</b><br/>
+<sub><a href="https://verify.ai-driven-dev.fr/u/jdm-web">Badge</a> · <a href="https://www.linkedin.com/in/jeremydesvaux/">LinkedIn</a></sub>
+</td>
+<td align="center" width="140">
+<a href="https://verify.ai-driven-dev.fr/u/tkman59"><img src="data/members/tkman59/photo.webp" width="72" height="72" style="border-radius:50%"/></a><br/>
+<b>Thierry Kwiatkowski</b><br/>
+<sub><a href="https://verify.ai-driven-dev.fr/u/tkman59">Badge</a> · <a href="https://www.linkedin.com/in/thierry-kwiatkowski">LinkedIn</a></sub>
+</td>
+<td align="center" width="140">
+<a href="https://verify.ai-driven-dev.fr/u/templth"><img src="data/members/templth/photo.webp" width="72" height="72" style="border-radius:50%"/></a><br/>
+<b>Thierry Templier</b><br/>
+<sub><a href="https://verify.ai-driven-dev.fr/u/templth">Badge</a> · <a href="https://www.linkedin.com/in/thierry-templier-7ba726/">LinkedIn</a></sub>
+</td>
+</tr>
+</table>
+
+Annuaire complet (vérifié en direct depuis les badges signés) : **[verify.ai-driven-dev.fr/communaute](https://verify.ai-driven-dev.fr/communaute)**.
+
+---
+
 Chaque membre certifié reçoit un **badge Open Badges 3.0** (signé RS256) dont
 l'authenticité se **vérifie par un tiers, indépendamment de nos serveurs**,
 affichable sur LinkedIn et ailleurs.
