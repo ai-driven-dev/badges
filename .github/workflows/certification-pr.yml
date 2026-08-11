@@ -11,7 +11,9 @@ permissions:
   contents: read
 
 concurrency:
-  group: certification-pr-${{ github.event.issue.number }}
+  # Groupe partagé (pas par issue, #111) : sérialise les runs pour que chacun
+  # voie la branche réservée par le précédent avant de calculer son index.
+  group: certification-pr-intake
   cancel-in-progress: false
 
 jobs:
@@ -41,11 +43,12 @@ jobs:
 
       - name: Calculer l'index de statut suivant
         id: idx
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
-          # Index permanent dans la Bitstring Status List : max(records actifs, index
-          # révoqués) + 1. Inclure revoked.json est ESSENTIEL : un index révoqué est
-          # brûlé à vie ; sans ça, retirer tous les membres actifs ferait retomber le
-          # compteur sur un index déjà révoqué -> un nouveau badge naîtrait « révoqué ».
+          # Index permanent : max(records actifs, revoked.json, PR ouvertes certif/*) + 1.
+          # Les PR ouvertes comptent aussi (#111) : sinon deux inscriptions traitées
+          # avant qu'une des deux merge lisent le même main -> même index -> collision.
           max=-1
           shopt -s nullglob
           for f in data/members/*/record.yml; do
@@ -57,6 +60,13 @@ jobs:
               if [ -n "$i" ] && [ "$i" -gt "$max" ]; then max="$i"; fi
             done < <(grep -oE '[0-9]+' data/revoked.json)
           fi
+          for branch in $(gh pr list --state open --json headRefName --jq '.[].headRefName | select(startswith("certif/"))'); do
+            git fetch --depth 1 origin "$branch"
+            for path in $(git ls-tree -r --name-only FETCH_HEAD -- data/members | grep '/record\.yml$' || true); do
+              i="$(git show "FETCH_HEAD:$path" | grep -oE '^status_index:[[:space:]]*[0-9]+' | grep -oE '[0-9]+' || true)"
+              if [ -n "$i" ] && [ "$i" -gt "$max" ]; then max="$i"; fi
+            done
+          done
           echo "next=$((max+1))" >> "$GITHUB_OUTPUT"
 
       - name: Lire la demande d'inscription
